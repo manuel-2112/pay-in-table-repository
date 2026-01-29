@@ -12,7 +12,6 @@
 	},
 	"dependencies": {
 		"@convex-dev/react-query": "^0.0.0-alpha.11",
-		"@kinde-oss/kinde-auth-react": "^5.5.1",
 		"@radix-ui/react-accordion": "^1.2.11",
 		"@radix-ui/react-progress": "^1.1.7",
 		"@radix-ui/react-slot": "^1.2.3",
@@ -22,14 +21,15 @@
 		"@tanstack/react-router-devtools": "^1.121.2",
 		"@tanstack/react-router-with-query": "^1.130.1",
 		"@tanstack/router-plugin": "^1.121.2",
-		"autumn-js": "^0.0.115",
+		"@xstate/react": "^6.0.0",
 		"class-variance-authority": "^0.7.1",
 		"clsx": "^2.1.1",
 		"lucide-react": "^0.526.0",
 		"react": "^19.0.0",
 		"react-dom": "^19.0.0",
 		"tailwind-merge": "^3.3.1",
-		"tailwindcss": "^4.1.11"
+		"tailwindcss": "^4.1.11",
+		"xstate": "^5.26.0"
 	},
 	"devDependencies": {
 		"@testing-library/dom": "^10.4.0",
