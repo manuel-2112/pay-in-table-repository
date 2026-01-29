@@ -5,5 +5,6 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
-// Re-export currency utilities
+// Re-export utilities
 export * from "./utils/currency";
+export * from "./utils/validation";
