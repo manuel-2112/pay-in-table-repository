@@ -4,7 +4,7 @@
 
 import { useEffect, useRef } from "react";
 import { useConvexMutation, useConvexQuery } from "@convex-dev/react-query";
-import { api } from "@2x4/backend/convex/_generated/api";
+import { api } from "@pay-in-table-repository/backend/convex/_generated/api";
 import type { PaymentActorRef, PaymentContext, PaymentParticipant } from "../types";
 
 interface UseConvexPaymentSyncOptions {

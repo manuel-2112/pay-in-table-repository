@@ -29,8 +29,8 @@ export const CustomButton = React.forwardRef<HTMLButtonElement, CustomButtonProp
     
     // Use inline style to set the button color dynamically
     const style = {
-      "--btn-color": color || "var(--brand-primary)",
-      "--btn-text-color": textColor || "white",
+      "--btn-color": color ?? "var(--brand-primary)",
+      "--btn-text-color": textColor ?? "var(--brand-primary-foreground)",
     } as React.CSSProperties;
 
     // Base classes for the premium look

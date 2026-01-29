@@ -4,3 +4,7 @@
 
 export { ItemSelectorRow, type SplitItem } from "./item-selector-row";
 export { ItemSelectorList } from "./item-selector-list";
+export {
+  ItemSelectorContainer,
+  type ItemSelectorContainerProps,
+} from "./item-selector-container";

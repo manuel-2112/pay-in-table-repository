@@ -1,6 +1,6 @@
-# @2x4/web
+# @pay-in-table-repository/web
 
-This is the TanStack Router + Vite web app section of the @2x4 stack monorepo.
+This is the TanStack Router + Vite web app section of the @pay-in-table-repository stack monorepo.
 
 ## Getting Started
 

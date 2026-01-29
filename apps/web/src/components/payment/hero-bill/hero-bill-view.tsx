@@ -3,6 +3,7 @@
  * 
  * Presentational component for displaying the bill in a hero section.
  * Features animated scroll effects and bill receipt display.
+ * Modular layout with sticky banner, logo, hero message, and receipt.
  * Dummy component - receives all data via props, no internal state/logic.
  */
 
@@ -11,6 +12,9 @@ import { motion, AnimatePresence } from "motion/react";
 import { CreditCard, Users } from "lucide-react";
 import { ContainerScroll } from "@/components/ui/container-scroll-animation";
 import { CustomButton } from "@/components/design-system/ui/custom-button";
+import { StickyBanner } from "@/components/ui/sticky-banner";
+import { RestaurantLogo } from "@/components/design-system/restaurant-logo";
+import { HeroMessage } from "@/components/design-system/hero-message";
 import { BillReceipt } from "../bill-receipt";
 
 interface HeroBillViewProps {
@@ -33,11 +37,15 @@ interface HeroBillViewProps {
   onPay?: () => void;
   onSplit?: () => void;
   showActions?: boolean;
+  /** Optional logo image URL */
+  logoUrl?: string;
+  /** Thank you message (default: "¡Gracias por elegirnos!") */
+  thankYouMessage?: string;
 }
 
 export function HeroBillView({
   restaurantName,
-  establishmentYear,
+  establishmentYear: _establishmentYear,
   address,
   phone,
   tableNumber,
@@ -51,11 +59,10 @@ export function HeroBillView({
   onPay,
   onSplit,
   showActions = true,
+  logoUrl,
+  thankYouMessage = "¡Gracias por elegirnos!",
 }: HeroBillViewProps) {
-  // Split restaurant name into words for animation
-  const restaurantNameWords = restaurantName.split(" ");
-
-  // Simple text flip component for the subtitle
+  // Simple text flip component for the payment mode indicator
   const SimpleTextFlip = ({
     words,
     duration,
@@ -76,7 +83,7 @@ export function HeroBillView({
     return (
       <motion.span
         layout
-        className="relative w-fit overflow-hidden rounded-md border border-transparent bg-white px-2 py-1 font-sans text-base font-medium tracking-tight text-zinc-900 shadow-sm ring shadow-black/5 ring-black/5 md:text-lg dark:bg-zinc-800 dark:text-white dark:shadow-sm dark:ring-1 dark:shadow-white/5 dark:ring-white/10"
+        className="relative w-fit overflow-hidden rounded-md border border-zinc-200 bg-white px-2 py-1 font-sans text-sm font-medium tracking-tight text-zinc-600 shadow-sm dark:border-zinc-700 dark:bg-zinc-800 dark:text-zinc-400"
       >
         <AnimatePresence mode="popLayout">
           <motion.span
@@ -100,77 +107,86 @@ export function HeroBillView({
   };
 
   return (
-    <div className="flex flex-col overflow-hidden relative">
-      <ContainerScroll
-        titleComponent={
-          <div className="flex flex-col items-center">
-            <motion.div
-              initial={{ opacity: 0, y: -10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5 }}
-              className="mb-2 flex items-center gap-2"
-            >
-              <div className="size-6 md:size-8 rounded-full bg-gradient-to-br from-amber-500 to-orange-600" />
-              <span className="text-xs md:text-sm font-medium tracking-widest uppercase text-amber-600 dark:text-amber-400">
-                Est. {establishmentYear}
-              </span>
-            </motion.div>
-            <h1 className="text-center">
-              {restaurantNameWords.map((word, index) => (
-                <motion.span
-                  key={index}
-                  initial={{ opacity: 0, filter: "blur(4px)", y: 10 }}
-                  animate={{ opacity: 1, filter: "blur(0px)", y: 0 }}
-                  transition={{
-                    duration: 0.3,
-                    delay: index * 0.15,
-                    ease: "easeInOut",
-                  }}
-                  className="mr-2 md:mr-4 inline-block text-3xl md:text-[5rem] font-bold leading-none text-zinc-900 dark:text-white"
-                >
-                  {word}
-                </motion.span>
-              ))}
-            </h1>
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              transition={{ duration: 0.3, delay: 0.6 }}
-              className="mt-2 flex items-center justify-center gap-2"
-            >
-              <span className="text-base font-medium tracking-tight text-zinc-600 md:text-lg dark:text-zinc-400">
-                Paga
-              </span>
-              <SimpleTextFlip
-                words={["Simple", "Fácil", "Rápido", "Seguro"]}
-                duration={2500}
-              />
-            </motion.div>
-          </div>
-        }
+    <div className="relative flex min-h-screen flex-col overflow-hidden bg-white dark:bg-zinc-950">
+      {/* Sticky Banner - Powered by AgoraPay */}
+      <StickyBanner
+        hideOnScroll
+        className="bg-gradient-to-b from-zinc-900 to-zinc-800 dark:from-zinc-950 dark:to-zinc-900"
       >
-        <BillReceipt
-          restaurantName={restaurantName}
-          address={address}
-          phone={phone}
-          tableNumber={tableNumber}
-          serverName={serverName}
-          date={date}
-          orderNumber={orderNumber}
-          items={items}
-          subtotal={subtotal}
-          tax={tax}
-          taxPercentage={8.5}
-          total={total}
-        />
-      </ContainerScroll>
+        <p className="mx-0 text-xs font-medium text-white drop-shadow-md">
+          powered by{" "}
+          <span className="font-semibold">AgoraPay</span>
+        </p>
+      </StickyBanner>
 
-      {/* Action Buttons */}
+      {/* Main Content - Scrollable */}
+      <div className="flex-1 overflow-y-auto">
+        <ContainerScroll
+          titleComponent={
+            <div className="flex flex-col items-center gap-8 px-4 py-12">
+              {/* Payment Mode Indicator */}
+              <motion.div
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5 }}
+                className="flex items-center gap-2"
+              >
+                <span className="text-sm font-medium tracking-tight text-zinc-600 dark:text-zinc-400">
+                  Paga
+                </span>
+                <SimpleTextFlip
+                  words={["Simple", "Fácil", "Rápido", "Seguro"]}
+                  duration={2500}
+                />
+              </motion.div>
+
+              {/* Restaurant Logo - tamaño estándar, proporcional */}
+              <RestaurantLogo
+                src={logoUrl}
+                alt={`${restaurantName} logo`}
+                name={restaurantName}
+                className="mx-auto"
+              />
+            </div>
+          }
+        >
+          <BillReceipt
+            restaurantName={restaurantName}
+            address={address}
+            phone={phone}
+            tableNumber={tableNumber}
+            serverName={serverName}
+            date={date}
+            orderNumber={orderNumber}
+            items={items}
+            subtotal={subtotal}
+            tax={tax}
+            taxPercentage={8.5}
+            total={total}
+          />
+        </ContainerScroll>
+
+        {/* Mensaje de agradecimiento debajo de la cuenta (fuera del Card para que se vea al hacer scroll) */}
+        <div className="px-4 pt-12 pb-32 text-center">
+          <HeroMessage
+            message={thankYouMessage}
+            size="xs"
+            className="text-zinc-600 dark:text-zinc-400"
+            delay={0}
+          />
+        </div>
+      </div>
+
+      {/* Action Buttons - Pagar Cuenta / Dividir */}
       {showActions && (
-        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 flex w-full max-w-lg gap-3 px-4">
+        <div className="fixed bottom-6 left-1/2 z-50 flex w-full max-w-lg -translate-x-1/2 gap-3 px-4">
           {onPay && (
-            <CustomButton onClick={onPay} className="flex-1">
-              <CreditCard className="size-4" />
+            <CustomButton
+              onClick={onPay}
+              className="flex flex-1 items-center justify-center gap-2"
+              aria-label="Pagar cuenta"
+            >
+              <CreditCard className="size-4 shrink-0" aria-hidden />
               Pagar Cuenta
             </CustomButton>
           )}
@@ -178,9 +194,10 @@ export function HeroBillView({
             <CustomButton
               onClick={onSplit}
               color="#ea580c"
-              className="flex-1"
+              className="flex flex-1 items-center justify-center gap-2"
+              aria-label="Dividir cuenta"
             >
-              <Users className="size-4" />
+              <Users className="size-4 shrink-0" aria-hidden />
               Dividir
             </CustomButton>
           )}

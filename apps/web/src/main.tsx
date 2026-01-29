@@ -6,22 +6,27 @@ import {
 } from "@tanstack/react-router";
 import { routerWithQueryClient } from "@tanstack/react-router-with-query";
 import { ConvexQueryClient } from "@convex-dev/react-query";
+import { ConvexProvider, ConvexReactClient } from "convex/react";
 import { CatchBoundary } from "@tanstack/react-router";
 import { PaymentActorProvider } from "./lib/xstate";
 
 // Import the generated route tree
 import { routeTree } from "./routeTree.gen";
 
+import "./App.css";
 import "./styles.css";
 import reportWebVitals from "./reportWebVitals.ts";
 import { QueryClient } from "@tanstack/react-query";
 
-export function createRouter() {
-	const CONVEX_URL = (import.meta as any).env.VITE_CONVEX_URL!;
-	if (!CONVEX_URL) {
-		console.error("missing envar VITE_CONVEX_URL");
-	}
-	const convexQueryClient = new ConvexQueryClient(CONVEX_URL);
+const CONVEX_URL = (import.meta as any).env.VITE_CONVEX_URL ?? "";
+
+/** Single Convex client for both ConvexProvider and ConvexQueryClient (avoids duplicate WebSocket). */
+export function createConvexClient() {
+	return new ConvexReactClient(CONVEX_URL);
+}
+
+export function createRouter(convexClient: InstanceType<typeof ConvexReactClient>) {
+	const convexQueryClient = new ConvexQueryClient(convexClient);
 
 	const queryClient: QueryClient = new QueryClient({
 		defaultOptions: {
@@ -64,13 +69,16 @@ declare module "@tanstack/react-router" {
 	}
 }
 
-// Render the app
+// Render the app – single Convex client to avoid duplicate WebSocket connections
 const rootElement = document.getElementById("app");
 if (rootElement && !rootElement.innerHTML) {
+	const convexClient = createConvexClient();
 	const root = ReactDOM.createRoot(rootElement);
 	root.render(
 		<StrictMode>
-			<RouterProvider router={createRouter()} />
+			<ConvexProvider client={convexClient}>
+				<RouterProvider router={createRouter(convexClient)} />
+			</ConvexProvider>
 		</StrictMode>
 	);
 }

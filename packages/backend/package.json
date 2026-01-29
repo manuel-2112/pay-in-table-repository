@@ -1,5 +1,5 @@
 {
-  "name": "@2x4/backend",
+  "name": "@pay-in-table-repository/backend",
   "module": "index.ts",
   "type": "module",
   "private": true,

@@ -8,6 +8,7 @@
  * @module
  */
 
+import type * as fintoc from "../fintoc.js";
 import type * as http from "../http.js";
 import type * as payments from "../payments.js";
 
@@ -26,6 +27,7 @@ import type {
  * ```
  */
 declare const fullApi: ApiFromModules<{
+  fintoc: typeof fintoc;
   http: typeof http;
   payments: typeof payments;
 }>;

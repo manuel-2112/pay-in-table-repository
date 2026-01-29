@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Project Overview
 
-This is a Turborepo monorepo called "2x4" using Bun as the package manager. The project consists of a React web application built with TanStack Start/Router, a Convex backend, and shared TypeScript configurations.
+This is a Turborepo monorepo called "pay-in-table-repository" using Bun as the package manager. The project consists of a React web application built with TanStack Start/Router, a Convex backend, and shared TypeScript configurations.
 
 ## Key Commands
 

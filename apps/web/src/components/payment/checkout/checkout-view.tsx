@@ -84,10 +84,10 @@ export function CheckoutView({
   isLoading,
   error,
   onCheckout,
-  onPaymentSuccess,
-  onPaymentError,
+  onPaymentSuccess: _onPaymentSuccess,
+  onPaymentError: _onPaymentError,
   onCancel,
-  onBack,
+  onBack: _onBack,
 }: CheckoutViewProps) {
   const canPay = isValidPaymentAmount(total);
 
