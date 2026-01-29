@@ -89,7 +89,13 @@ export function useConvexPaymentSync({
 					amount: convexPayment.amount,
 					currency: convexPayment.currency,
 					status: convexPayment.status as PaymentContext["status"],
-					participants: convexPayment.participants.map((p: PaymentParticipant) => ({
+					participants: (convexPayment.participants as Array<{
+						id: string;
+						name: string;
+						amount: number;
+						status: string;
+						paidAt?: number;
+					}>).map((p) => ({
 						id: p.id,
 						name: p.name,
 						amount: p.amount,

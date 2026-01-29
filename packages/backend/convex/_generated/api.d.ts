@@ -8,11 +8,8 @@
  * @module
  */
 
-import type * as auth_kinde from "../auth/kinde.js";
-import type * as auth_user from "../auth/user.js";
 import type * as http from "../http.js";
-import type * as tasks from "../tasks.js";
-import type * as types_KindeTypes from "../types/KindeTypes.js";
+import type * as payments from "../payments.js";
 
 import type {
   ApiFromModules,
@@ -29,11 +26,8 @@ import type {
  * ```
  */
 declare const fullApi: ApiFromModules<{
-  "auth/kinde": typeof auth_kinde;
-  "auth/user": typeof auth_user;
   http: typeof http;
-  tasks: typeof tasks;
-  "types/KindeTypes": typeof types_KindeTypes;
+  payments: typeof payments;
 }>;
 declare const fullApiWithMounts: typeof fullApi;
 
