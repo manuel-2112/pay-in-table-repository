@@ -21,6 +21,8 @@ interface BillReceiptProps extends HTMLAttributes<HTMLDivElement> {
     name: string;
     quantity: number;
     price: number;
+    /** When true, row is shown in gray (e.g. reserved by another user or paid) */
+    disabled?: boolean;
   }>;
   subtotal: number;
   tax: number;
@@ -94,8 +96,23 @@ export function BillReceipt({
         {/* Items List */}
         <div className="mb-6 space-y-3">
           {items.map((item, index) => (
-            <div key={index} className="grid grid-cols-12 text-sm text-zinc-600">
-              <div className="col-span-6 font-medium text-zinc-900">{item.name}</div>
+            <div
+              key={index}
+              className={cn(
+                "grid grid-cols-12 text-sm",
+                item.disabled
+                  ? "text-zinc-400 dark:text-zinc-500"
+                  : "text-zinc-600"
+              )}
+            >
+              <div
+                className={cn(
+                  "col-span-6 font-medium",
+                  item.disabled ? "text-zinc-400 dark:text-zinc-500" : "text-zinc-900"
+                )}
+              >
+                {item.name}
+              </div>
               <div className="col-span-2 text-center">{item.quantity}</div>
               <div className="col-span-4 text-right">
                 {formatCLP(item.price)}

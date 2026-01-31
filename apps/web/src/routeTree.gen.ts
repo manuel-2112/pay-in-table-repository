@@ -9,11 +9,19 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as PayRouteImport } from './routes/pay'
 import { Route as DemoRouteImport } from './routes/demo'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as PayRedirectSuccessRouteImport } from './routes/pay.redirect.success'
+import { Route as PayRedirectCancelRouteImport } from './routes/pay.redirect.cancel'
 import { Route as DemoRedirectSuccessRouteImport } from './routes/demo.redirect.success'
 import { Route as DemoRedirectCancelRouteImport } from './routes/demo.redirect.cancel'
 
+const PayRoute = PayRouteImport.update({
+  id: '/pay',
+  path: '/pay',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const DemoRoute = DemoRouteImport.update({
   id: '/demo',
   path: '/demo',
@@ -23,6 +31,16 @@ const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
+} as any)
+const PayRedirectSuccessRoute = PayRedirectSuccessRouteImport.update({
+  id: '/redirect/success',
+  path: '/redirect/success',
+  getParentRoute: () => PayRoute,
+} as any)
+const PayRedirectCancelRoute = PayRedirectCancelRouteImport.update({
+  id: '/redirect/cancel',
+  path: '/redirect/cancel',
+  getParentRoute: () => PayRoute,
 } as any)
 const DemoRedirectSuccessRoute = DemoRedirectSuccessRouteImport.update({
   id: '/redirect/success',
@@ -38,42 +56,76 @@ const DemoRedirectCancelRoute = DemoRedirectCancelRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/demo': typeof DemoRouteWithChildren
+  '/pay': typeof PayRouteWithChildren
   '/demo/redirect/cancel': typeof DemoRedirectCancelRoute
   '/demo/redirect/success': typeof DemoRedirectSuccessRoute
+  '/pay/redirect/cancel': typeof PayRedirectCancelRoute
+  '/pay/redirect/success': typeof PayRedirectSuccessRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/demo': typeof DemoRouteWithChildren
+  '/pay': typeof PayRouteWithChildren
   '/demo/redirect/cancel': typeof DemoRedirectCancelRoute
   '/demo/redirect/success': typeof DemoRedirectSuccessRoute
+  '/pay/redirect/cancel': typeof PayRedirectCancelRoute
+  '/pay/redirect/success': typeof PayRedirectSuccessRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/demo': typeof DemoRouteWithChildren
+  '/pay': typeof PayRouteWithChildren
   '/demo/redirect/cancel': typeof DemoRedirectCancelRoute
   '/demo/redirect/success': typeof DemoRedirectSuccessRoute
+  '/pay/redirect/cancel': typeof PayRedirectCancelRoute
+  '/pay/redirect/success': typeof PayRedirectSuccessRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/demo' | '/demo/redirect/cancel' | '/demo/redirect/success'
+  fullPaths:
+    | '/'
+    | '/demo'
+    | '/pay'
+    | '/demo/redirect/cancel'
+    | '/demo/redirect/success'
+    | '/pay/redirect/cancel'
+    | '/pay/redirect/success'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/demo' | '/demo/redirect/cancel' | '/demo/redirect/success'
+  to:
+    | '/'
+    | '/demo'
+    | '/pay'
+    | '/demo/redirect/cancel'
+    | '/demo/redirect/success'
+    | '/pay/redirect/cancel'
+    | '/pay/redirect/success'
   id:
     | '__root__'
     | '/'
     | '/demo'
+    | '/pay'
     | '/demo/redirect/cancel'
     | '/demo/redirect/success'
+    | '/pay/redirect/cancel'
+    | '/pay/redirect/success'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   DemoRoute: typeof DemoRouteWithChildren
+  PayRoute: typeof PayRouteWithChildren
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/pay': {
+      id: '/pay'
+      path: '/pay'
+      fullPath: '/pay'
+      preLoaderRoute: typeof PayRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/demo': {
       id: '/demo'
       path: '/demo'
@@ -87,6 +139,20 @@ declare module '@tanstack/react-router' {
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/pay/redirect/success': {
+      id: '/pay/redirect/success'
+      path: '/redirect/success'
+      fullPath: '/pay/redirect/success'
+      preLoaderRoute: typeof PayRedirectSuccessRouteImport
+      parentRoute: typeof PayRoute
+    }
+    '/pay/redirect/cancel': {
+      id: '/pay/redirect/cancel'
+      path: '/redirect/cancel'
+      fullPath: '/pay/redirect/cancel'
+      preLoaderRoute: typeof PayRedirectCancelRouteImport
+      parentRoute: typeof PayRoute
     }
     '/demo/redirect/success': {
       id: '/demo/redirect/success'
@@ -117,9 +183,22 @@ const DemoRouteChildren: DemoRouteChildren = {
 
 const DemoRouteWithChildren = DemoRoute._addFileChildren(DemoRouteChildren)
 
+interface PayRouteChildren {
+  PayRedirectCancelRoute: typeof PayRedirectCancelRoute
+  PayRedirectSuccessRoute: typeof PayRedirectSuccessRoute
+}
+
+const PayRouteChildren: PayRouteChildren = {
+  PayRedirectCancelRoute: PayRedirectCancelRoute,
+  PayRedirectSuccessRoute: PayRedirectSuccessRoute,
+}
+
+const PayRouteWithChildren = PayRoute._addFileChildren(PayRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   DemoRoute: DemoRouteWithChildren,
+  PayRoute: PayRouteWithChildren,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

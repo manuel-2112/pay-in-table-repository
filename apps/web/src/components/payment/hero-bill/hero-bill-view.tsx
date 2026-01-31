@@ -30,6 +30,8 @@ interface HeroBillViewProps {
     name: string;
     quantity: number;
     price: number;
+    /** When true, item is shown in gray (e.g. reserved by another user or paid) */
+    disabled?: boolean;
   }>;
   subtotal: number;
   tax: number;
