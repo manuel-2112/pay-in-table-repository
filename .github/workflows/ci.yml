@@ -1,0 +1,41 @@
+name: CI
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+    branches: [main, master]
+  workflow_dispatch:
+    inputs:
+      skip_lint:
+        description: "Skip lint step"
+        required: false
+        default: false
+        type: boolean
+
+env:
+  BUN_VERSION: "1.2.19"
+
+jobs:
+  typecheck-and-lint:
+    name: Typecheck & Lint
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Bun
+        uses: oven-sh/setup-bun@v2
+        with:
+          bun-version: ${{ env.BUN_VERSION }}
+
+      - name: Install dependencies
+        run: bun install --frozen-lockfile
+
+      - name: Typecheck
+        run: bun run check-types
+
+      # Lint: se omite si workflow_dispatch con skip_lint=true
+      - name: Lint
+        if: ${{ github.event_name != 'workflow_dispatch' || !inputs.skip_lint }}
+        run: bun run lint
