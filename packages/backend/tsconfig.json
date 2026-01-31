@@ -1,3 +1,3 @@
 {
-  "extends": "@2x4/typescript-config/convex.json"
+  "extends": "@pay-in-table-repository/typescript-config/convex.json"
 }

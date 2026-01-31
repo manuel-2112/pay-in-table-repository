@@ -1,5 +1,5 @@
 {
-  "name": "2x4",
+  "name": "pay-in-table-repository",
   "private": true,
   "scripts": {
     "build": "turbo run build",

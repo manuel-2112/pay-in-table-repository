@@ -19,7 +19,7 @@ export default defineConfig({
 	build: {
 		chunkSizeWarningLimit: 700,
 		rollupOptions: {
-			external: ["@2x4/backend", "@2x4/atmn"],
+			external: ["@pay-in-table-repository/backend"],
 		},
 	},
 });

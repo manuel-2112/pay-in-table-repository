@@ -9,38 +9,78 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as DemoRouteImport } from './routes/demo'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as DemoRedirectSuccessRouteImport } from './routes/demo.redirect.success'
+import { Route as DemoRedirectCancelRouteImport } from './routes/demo.redirect.cancel'
 
+const DemoRoute = DemoRouteImport.update({
+  id: '/demo',
+  path: '/demo',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const DemoRedirectSuccessRoute = DemoRedirectSuccessRouteImport.update({
+  id: '/redirect/success',
+  path: '/redirect/success',
+  getParentRoute: () => DemoRoute,
+} as any)
+const DemoRedirectCancelRoute = DemoRedirectCancelRouteImport.update({
+  id: '/redirect/cancel',
+  path: '/redirect/cancel',
+  getParentRoute: () => DemoRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/demo': typeof DemoRouteWithChildren
+  '/demo/redirect/cancel': typeof DemoRedirectCancelRoute
+  '/demo/redirect/success': typeof DemoRedirectSuccessRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/demo': typeof DemoRouteWithChildren
+  '/demo/redirect/cancel': typeof DemoRedirectCancelRoute
+  '/demo/redirect/success': typeof DemoRedirectSuccessRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/demo': typeof DemoRouteWithChildren
+  '/demo/redirect/cancel': typeof DemoRedirectCancelRoute
+  '/demo/redirect/success': typeof DemoRedirectSuccessRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/'
+  fullPaths: '/' | '/demo' | '/demo/redirect/cancel' | '/demo/redirect/success'
   fileRoutesByTo: FileRoutesByTo
-  to: '/'
-  id: '__root__' | '/'
+  to: '/' | '/demo' | '/demo/redirect/cancel' | '/demo/redirect/success'
+  id:
+    | '__root__'
+    | '/'
+    | '/demo'
+    | '/demo/redirect/cancel'
+    | '/demo/redirect/success'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  DemoRoute: typeof DemoRouteWithChildren
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/demo': {
+      id: '/demo'
+      path: '/demo'
+      fullPath: '/demo'
+      preLoaderRoute: typeof DemoRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -48,11 +88,38 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/demo/redirect/success': {
+      id: '/demo/redirect/success'
+      path: '/redirect/success'
+      fullPath: '/demo/redirect/success'
+      preLoaderRoute: typeof DemoRedirectSuccessRouteImport
+      parentRoute: typeof DemoRoute
+    }
+    '/demo/redirect/cancel': {
+      id: '/demo/redirect/cancel'
+      path: '/redirect/cancel'
+      fullPath: '/demo/redirect/cancel'
+      preLoaderRoute: typeof DemoRedirectCancelRouteImport
+      parentRoute: typeof DemoRoute
+    }
   }
 }
 
+interface DemoRouteChildren {
+  DemoRedirectCancelRoute: typeof DemoRedirectCancelRoute
+  DemoRedirectSuccessRoute: typeof DemoRedirectSuccessRoute
+}
+
+const DemoRouteChildren: DemoRouteChildren = {
+  DemoRedirectCancelRoute: DemoRedirectCancelRoute,
+  DemoRedirectSuccessRoute: DemoRedirectSuccessRoute,
+}
+
+const DemoRouteWithChildren = DemoRoute._addFileChildren(DemoRouteChildren)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  DemoRoute: DemoRouteWithChildren,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

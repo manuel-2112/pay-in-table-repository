@@ -1,5 +1,5 @@
 {
-  "name": "@2x4/backend",
+  "name": "@pay-in-table-repository/backend",
   "module": "index.ts",
   "type": "module",
   "private": true,
@@ -16,8 +16,6 @@
     "deploy": "convex deploy"
   },
   "dependencies": {
-    "@convex-dev/action-cache": "^0.2.10",
-    "autumn-js": "^0.0.115",
-    "jose": "^6.0.12"
+    "@convex-dev/action-cache": "^0.2.10"
   }
 }

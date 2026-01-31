@@ -1,14 +1,12 @@
-# 2X4 Stack
+# PayInTable
 
-A modern full-stack TypeScript monorepo built with Turborepo + Convex + React + Vite + TanStack Router + shadcn/ui + Autumn Billing.
+A modern full-stack TypeScript monorepo built with Turborepo + Convex + React + Vite + TanStack Router + shadcn/ui.
 
 ## Tech Stack
 
 - **Frontend**: React 19 with TanStack Router, Vite, and shadcn/ui components
 - **Backend**: Convex for real-time database and serverless functions  
-- **Auth**: Kinde Auth integration
 - **Styling**: Tailwind CSS v4 with Radix UI primitives
-- **Billing**: Autumn for payment management
 - **Build System**: Turborepo with Bun package manager
 - **Type Safety**: TypeScript throughout with strict configurations
 
@@ -18,9 +16,8 @@ This monorepo includes the following packages/apps:
 
 ### Apps and Packages
 
-- `web`: React application with TanStack Router, Convex integration, and Kinde Auth
-- `atmn`: Autumn billing management CLI and utilities  
-- `backend`: Convex backend with database schema, auth, and serverless functions
+- `web`: React application with TanStack Router and Convex integration
+- `backend`: Convex backend with database schema and serverless functions
 - `typescript-config`: Shared TypeScript configurations for different environments
 
 Each package/app is 100% [TypeScript](https://www.typescriptlang.org/).
@@ -31,7 +28,6 @@ Each package/app is 100% [TypeScript](https://www.typescriptlang.org/).
 
 - [Bun](https://bun.sh/) (recommended package manager and runtime)
 - [Convex](https://convex.dev/) account for backend services
-- [Autumn](https://useautumn.com) account for billing engine
 
 ### Development
 
@@ -56,9 +52,6 @@ turbo dev --filter=web
 
 # Backend only  
 turbo dev --filter=backend
-
-# Autumn billing CLI
-turbo dev --filter=atmn
 ```
 
 ### Build
@@ -95,8 +88,7 @@ bun run format
 ## Project Structure
 
 - **apps/web**: Main React application with TanStack Router and Convex integration
-- **apps/atmn**: Autumn billing management tools and CLI
-- **packages/backend**: Convex backend with auth, database schema, and functions
+- **packages/backend**: Convex backend with database schema and functions
 - **packages/typescript-config**: Shared TypeScript configurations
 
 ## Utilities
@@ -129,12 +121,10 @@ turbo link
 
 Learn more about the technologies used:
 
-### 2X4 Stack Components
+### Stack Components
 - [Convex](https://convex.dev/) - Backend-as-a-Service with real-time database
 - [TanStack Router](https://tanstack.com/router) - Type-safe router for React
-- [Kinde Auth](https://kinde.com/) - Authentication and user management
 - [shadcn/ui](https://ui.shadcn.com/) - Re-usable components built with Radix UI and Tailwind CSS
-- [Autumn](https://useautumn.com/) - Billing and payment management
 - [Bun](https://bun.sh/) - Fast all-in-one JavaScript runtime and package manager
 
 ### Turborepo
