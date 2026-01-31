@@ -11,6 +11,10 @@
 import type * as fintoc from "../fintoc.js";
 import type * as http from "../http.js";
 import type * as payments from "../payments.js";
+import type * as restaurants from "../restaurants.js";
+import type * as sessionPayments from "../sessionPayments.js";
+import type * as sessions from "../sessions.js";
+import type * as tables from "../tables.js";
 
 import type {
   ApiFromModules,
@@ -30,6 +34,10 @@ declare const fullApi: ApiFromModules<{
   fintoc: typeof fintoc;
   http: typeof http;
   payments: typeof payments;
+  restaurants: typeof restaurants;
+  sessionPayments: typeof sessionPayments;
+  sessions: typeof sessions;
+  tables: typeof tables;
 }>;
 declare const fullApiWithMounts: typeof fullApi;
 

@@ -8,10 +8,8 @@
 
 import { TipPresetButton } from "./tip-preset-button";
 import { TipCustomInput } from "./tip-custom-input";
-import { Card } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { TIP_PRESETS } from "@/lib/constants/payment";
-import Counter from "@/components/ui/counter";
 
 interface TipSelectorViewProps {
   /**
@@ -104,7 +102,7 @@ export function TipSelectorView({
       />
 
       {/* Current tip display */}
-      <Card className="bg-muted/50 p-6 flex flex-col items-center justify-center gap-2 overflow-hidden relative min-h-[160px]">
+      {/* <Card className="bg-muted/50 p-6 flex flex-col items-center justify-center gap-2 overflow-hidden relative min-h-[160px]">
         <p className="text-sm text-muted-foreground z-10 relative">
           Propina seleccionada
         </p>
@@ -124,7 +122,7 @@ export function TipSelectorView({
             gradientHeight={32}
           />
         </div>
-      </Card>
+      </Card> */}
     </div>
   );
 }

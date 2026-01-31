@@ -1,7 +1,7 @@
 /**
  * Demo Payment Flow
  *
- * Hero Bill → [Dividir → Split] → Propina → Pago con Fintoc (monto demo: 1 CLP).
+ * Hero Bill → [Dividir → Split] → Propina → Pago con Fintoc (monto real).
  * Por defecto usa el flujo Widget: al pulsar "Pagar" se crea una sesión y se abre
  * el widget en la misma página. También disponible el flujo Redirect (redirect_url)
  * y las rutas de retorno /demo/redirect/success y /demo/redirect/cancel.
@@ -20,6 +20,7 @@ import { ItemSelectorContainer, type SplitItem } from "@/components/payment/item
 import { CustomButton } from "@/components/design-system/ui/custom-button";
 import { calculateTax } from "@/lib/utils/validation";
 import { DEMO_LOGO_DATA_URL } from "@/lib/constants/demo-assets";
+import { IVA_INCLUDED, DEFAULT_TIP_PERCENTAGE } from "@/lib/constants/payment";
 
 type DemoView = "hero" | "split" | "tip" | "success";
 
@@ -46,9 +47,10 @@ const DEMO_BILL = {
 
 const subtotalDemo =
 	DEMO_BILL.items.reduce((sum, i) => sum + i.quantity * i.price, 0);
-const taxDemo = calculateTax(subtotalDemo);
+// Chile: IVA incluido en precios; no se suma IVA al total
+const taxDemo = IVA_INCLUDED ? 0 : calculateTax(subtotalDemo);
 const totalBillDemo = subtotalDemo + taxDemo;
-const taxRateDemo = subtotalDemo > 0 ? taxDemo / subtotalDemo : 0.19;
+const taxRateDemo = IVA_INCLUDED ? 0 : (subtotalDemo > 0 ? taxDemo / subtotalDemo : 0.19);
 
 /** Items para la vista Dividir (split) en formato SplitItem */
 const DEMO_SPLIT_ITEMS: SplitItem[] = DEMO_BILL.items.map((item, index) => ({
@@ -71,7 +73,7 @@ function DemoPage() {
 
 	const [view, setView] = useState<DemoView>("hero");
 	const [currentTip, setCurrentTip] = useState(0);
-	const [selectedPreset, setSelectedPreset] = useState<number | null>(15);
+	const [selectedPreset, setSelectedPreset] = useState<number | null>(DEFAULT_TIP_PERCENTAGE);
 	const [customTipAmount, setCustomTipAmount] = useState("");
 	const [checkoutLoading, setCheckoutLoading] = useState(false);
 	/** Mensaje de error al crear sesión Fintoc (Convex/Fintoc no disponible) */
@@ -105,8 +107,8 @@ function DemoPage() {
 	}, []);
 
 	const handleGoToTip = useCallback(() => {
-		setCurrentTip(Math.round(effectiveSubtotal * 0.15));
-		setSelectedPreset(15);
+		setCurrentTip(Math.round(effectiveSubtotal * (DEFAULT_TIP_PERCENTAGE / 100)));
+		setSelectedPreset(DEFAULT_TIP_PERCENTAGE);
 		setView("tip");
 	}, [effectiveSubtotal]);
 
@@ -116,25 +118,27 @@ function DemoPage() {
 				(s, i) => s + (i.price ?? 0) * (i.quantity ?? 1),
 				0
 			);
-			const tax = Math.round(subtotal * taxRateDemo);
+			const tax = IVA_INCLUDED ? 0 : Math.round(subtotal * taxRateDemo);
 			setSplitSubtotal(subtotal);
 			setSplitTax(tax);
-			setCurrentTip(Math.round(subtotal * 0.15));
-			setSelectedPreset(15);
+			setCurrentTip(Math.round(subtotal * (DEFAULT_TIP_PERCENTAGE / 100)));
+			setSelectedPreset(DEFAULT_TIP_PERCENTAGE);
 			setView("tip");
 		},
 		[]
 	);
 
-	/** Demo usa flujo Widget por defecto: crea sesión Fintoc (1 CLP) y abre el widget */
+	/** Demo: crea sesión Fintoc con el monto real y abre el widget */
 	const handlePayNow = useCallback(async () => {
 		setCheckoutError(null);
 		setCheckoutLoading(true);
 		const baseUrl =
 			typeof window !== "undefined" ? `${window.location.origin}/demo/redirect` : "";
+		const amountClp = Math.round(totalToPay);
 		try {
 			const result = await Promise.race([
 				createFintocSession({
+					amount: amountClp,
 					successUrl: `${baseUrl}/success`,
 					cancelUrl: `${baseUrl}/cancel`,
 				}),
@@ -163,7 +167,7 @@ function DemoPage() {
 					: "No se pudo conectar. Revisa que Convex dev esté corriendo y FINTOC_SECRET_KEY esté configurado.";
 			setCheckoutError(msg);
 		}
-	}, [createFintocSession]);
+	}, [createFintocSession, totalToPay]);
 
 	const handleBackFromTip = useCallback(() => {
 		setView(splitSubtotal != null ? "split" : "hero");
@@ -174,7 +178,7 @@ function DemoPage() {
 	const handleRestart = useCallback(() => {
 		setView("hero");
 		setCurrentTip(0);
-		setSelectedPreset(15);
+		setSelectedPreset(DEFAULT_TIP_PERCENTAGE);
 		setCustomTipAmount("");
 		setCheckoutLoading(false);
 		setCheckoutError(null);
@@ -210,7 +214,7 @@ function DemoPage() {
 							Pago exitoso
 						</h2>
 						<p className="text-sm text-zinc-500 dark:text-zinc-400 mt-2">
-							Total mostrado: ${totalToPay.toLocaleString("es-CL")} CLP (demo cobró 1 CLP)
+							Total pagado: ${totalToPay.toLocaleString("es-CL")} CLP
 						</p>
 					</div>
 					<CustomButton onClick={handleRestart} className="w-full">
@@ -288,7 +292,7 @@ function DemoPage() {
 		);
 	}
 
-	// Vista: Tip (Agrega propina + panel Pagar → Fintoc 1 CLP)
+	// Vista: Tip (Agrega propina + panel Pagar → Fintoc monto real)
 	return (
 		<div className="min-h-screen bg-zinc-50 dark:bg-zinc-950 pb-24">
 			<FintocCheckout

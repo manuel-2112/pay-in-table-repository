@@ -24,7 +24,7 @@ VITE_FINTOC_PUBLIC_KEY=pk_test_xxxxxxxx
 
 El **session_token** debe crearse en el backend (nunca en el cliente) para no exponer la API secret.
 
-En este proyecto se usa la Convex action `fintoc.createFintocCheckoutSession` (demo: monto fijo 1 CLP). En el dashboard de Convex configura la variable de entorno **FINTOC_SECRET_KEY** (tu secret key de Fintoc).
+En este proyecto se usa la Convex action `fintoc.createFintocCheckoutSession`, que recibe el monto real (CLP) y crea la sesión. En el dashboard de Convex configura la variable de entorno **FINTOC_SECRET_KEY** (tu secret key de Fintoc).
 
 **Endpoint (referencia):** `POST https://api.fintoc.com/v1/checkout_sessions`
 

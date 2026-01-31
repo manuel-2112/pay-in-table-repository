@@ -113,7 +113,7 @@ export function BillReceipt({
             <span>{formatCLP(subtotal)}</span>
           </div>
           <div className="flex justify-between text-zinc-600">
-            <span>Tax ({taxPercentage}%)</span>
+            <span>{tax === 0 ? "IVA incluido" : `Tax (${taxPercentage}%)`}</span>
             <span>{formatCLP(tax)}</span>
           </div>
           

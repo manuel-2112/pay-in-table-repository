@@ -1,6 +1,6 @@
 /**
  * Fintoc checkout session – backend only.
- * Creates a checkout session with Fintoc API (demo: 1 CLP).
+ * Creates a checkout session with Fintoc API using the real payment amount.
  */
 
 import { action } from "./_generated/server";
@@ -10,12 +10,12 @@ const FINTOC_API_BASE = "https://api.fintoc.com/v1";
 
 /**
  * Creates a Fintoc checkout session for the payment widget.
- * Demo: amount is hardcoded to 1 CLP regardless of UI total.
+ * Uses the real amount (CLP, integer) provided by the client.
  */
 export const createFintocCheckoutSession = action({
 	args: {
-		/** Ignored in demo; real amount is 1 CLP. Kept for future use. */
-		_amountCents: v.optional(v.number()),
+		/** Amount to charge in CLP (integer, smallest unit; e.g. 15000 = $15.000) */
+		amount: v.number(),
 		/** Optional customer email for the session */
 		customerEmail: v.optional(v.string()),
 		/** URL to redirect on success (required by Fintoc v1 for checkout_sessions) */
@@ -29,8 +29,10 @@ export const createFintocCheckoutSession = action({
 			throw new Error("FINTOC_SECRET_KEY is not set in Convex environment");
 		}
 
-		// Demo: always charge 1 CLP
-		const amount = 1;
+		const amount = Math.round(args.amount);
+		if (amount < 1) {
+			throw new Error("Amount must be at least 1 CLP");
+		}
 		const currency = "CLP";
 		const customerEmail = args.customerEmail ?? "demo@payintable.com";
 		// Fintoc requires HTTPS; use valid placeholders when frontend sends HTTP (e.g. localhost)

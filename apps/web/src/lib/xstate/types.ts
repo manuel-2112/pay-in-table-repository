@@ -56,3 +56,75 @@ export interface PaymentActorSnapshot {
 	matches: (state: PaymentStatus) => boolean;
 	can: (event: PaymentEvent["type"]) => boolean;
 }
+
+// --- Session item (table checkout) ---
+
+export type SessionItemStatus = "available" | "reserved" | "paid";
+
+export interface ItemContext {
+	sessionItemId: string;
+	sessionId: string;
+	name: string;
+	quantity: number;
+	price: number;
+	reservedByClientId: string | undefined;
+	/** Local client UUID; same for all items in this browser */
+	clientId: string | undefined;
+	/** Set at actor creation so invoke can call Convex (not persisted) */
+	reserveItem?: (sessionItemId: string, clientId: string) => Promise<void>;
+	releaseItem?: (sessionItemId: string, clientId: string) => Promise<void>;
+}
+
+export type ItemEvent =
+	| { type: "RESERVE"; clientId: string }
+	| { type: "RELEASE" }
+	| { type: "START_PAYMENT" }
+	| { type: "PAYMENT_CONFIRMED" }
+	| { type: "PAYMENT_FAILED" }
+	| { type: "PAYMENT_CANCELLED" }
+	| { type: "SYNC_FROM_SERVER"; status: SessionItemStatus; reservedByClientId?: string };
+
+export interface ItemInput extends ItemContext {
+	/** Called when reserving; (sessionItemId, clientId) => Promise<void> */
+	reserveItem: (sessionItemId: string, clientId: string) => Promise<void>;
+	/** Called when releasing; (sessionItemId, clientId) => Promise<void> */
+	releaseItem: (sessionItemId: string, clientId: string) => Promise<void>;
+}
+
+export type ItemStateValue =
+	| "available"
+	| "reserving"
+	| "reserved"
+	| "releasing"
+	| "paying"
+	| "confirming"
+	| "paid";
+
+export interface ItemActorSnapshot {
+	value: ItemStateValue;
+	context: ItemContext;
+	matches: (state: ItemStateValue) => boolean;
+	can: (event: ItemEvent["type"]) => boolean;
+}
+
+// --- Checkout coordinator (table session) ---
+
+export interface CheckoutCoordinatorContext {
+	accessToken: string;
+	clientId: string;
+	sessionId: string | undefined;
+	session: { totalAmountCents: number } | null;
+	/** Map sessionItemId -> actor ref (or snapshot) for items reserved by this client */
+	itemActors: Map<string, { sessionItemId: string; reservedByClientId: string }>;
+	/** Total amount to pay (sum of reserved items by this client) */
+	totalToPayCents: number;
+}
+
+export type CheckoutCoordinatorEvent =
+	| { type: "SESSION_LOADED"; accessToken: string; clientId: string; session: { _id: string; totalAmountCents: number } | null; items: Array<{ _id: string; status: SessionItemStatus; reservedByClientId?: string }> }
+	| { type: "ITEM_RESERVED"; sessionItemId: string; reservedByClientId: string }
+	| { type: "ITEM_RELEASED"; sessionItemId: string }
+	| { type: "START_PAYMENT" }
+	| { type: "PAYMENT_CONFIRMED"; sessionItemIds: string[] }
+	| { type: "PAYMENT_FAILED" }
+	| { type: "PAYMENT_CANCELLED" };

@@ -11,6 +11,7 @@
 import { motion, AnimatePresence } from "motion/react";
 import { formatCLP } from "@/lib/utils/currency";
 import { CustomButton } from "@/components/design-system/ui/custom-button";
+import { FLOATING_PANEL } from "@/lib/constants/copy";
 
 export interface FloatingPaymentPanelProps {
   /** Number of selected items (0 = hide panel if controlled by parent, or use alwaysVisible) */
@@ -39,7 +40,7 @@ export function FloatingPaymentPanel({
   tax,
   total,
   onPayNow,
-  label = "Continuar",
+  label = FLOATING_PANEL.DEFAULT_LABEL,
   alwaysVisible = false,
   subtitle,
   isLoading = false,
@@ -66,8 +67,10 @@ export function FloatingPaymentPanel({
                     </p>
                   ) : selectedCount > 0 ? (
                     <p className="text-xs text-zinc-500 dark:text-zinc-400">
-                      {selectedCount} elemento{selectedCount !== 1 ? "s" : ""}{" "}
-                      seleccionado{selectedCount !== 1 ? "s" : ""}
+                      {selectedCount}{" "}
+                      {selectedCount === 1
+                        ? FLOATING_PANEL.ITEM_SELECTED_ONE
+                        : FLOATING_PANEL.ITEM_SELECTED_MANY}
                     </p>
                   ) : null}
                   <p className="text-xl font-semibold text-zinc-900 dark:text-white tabular-nums">
@@ -81,13 +84,19 @@ export function FloatingPaymentPanel({
                     isLoading={isLoading}
                     disabled={isLoading}
                   >
-                    {isLoading ? "Procesando..." : label}
+                    {isLoading ? FLOATING_PANEL.LOADING_LABEL : label}
                   </CustomButton>
                 )}
               </div>
               <div className="flex justify-between text-xs text-zinc-400 dark:text-zinc-500">
-                <span>Subtotal: {formatCLP(subtotal)}</span>
-                <span>IVA: {formatCLP(tax)}</span>
+                <span>
+                  {FLOATING_PANEL.SUBTOTAL_LABEL}: {formatCLP(subtotal)}
+                </span>
+                <span>
+                  {tax === 0
+                    ? FLOATING_PANEL.IVA_INCLUDED
+                    : `${FLOATING_PANEL.IVA_LABEL_PREFIX}${formatCLP(tax)}`}
+                </span>
               </div>
             </div>
           </div>
