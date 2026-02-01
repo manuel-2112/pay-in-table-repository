@@ -114,6 +114,7 @@ export const markItemsAsPaid = mutation({
 			await ctx.db.patch(itemId, {
 				status: "paid",
 				reservedByClientId: undefined,
+				reservedAt: undefined,
 			});
 		}
 

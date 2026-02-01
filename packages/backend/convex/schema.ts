@@ -65,6 +65,7 @@ export default defineSchema({
 			v.literal("paid")
 		),
 		reservedByClientId: v.optional(v.string()),
+		reservedAt: v.optional(v.number()),
 		createdAt: v.number(),
 	}).index("by_session_id", ["sessionId"]),
 

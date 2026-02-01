@@ -194,8 +194,8 @@ export function HeroBillView({
           )}
           {onSplit && (
             <CustomButton
+              variant="brandSecondary"
               onClick={onSplit}
-              color="#ea580c"
               className="flex flex-1 items-center justify-center gap-2"
               aria-label="Dividir cuenta"
             >

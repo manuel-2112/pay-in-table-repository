@@ -52,13 +52,14 @@ const taxDemo = IVA_INCLUDED ? 0 : calculateTax(subtotalDemo);
 const totalBillDemo = subtotalDemo + taxDemo;
 const taxRateDemo = IVA_INCLUDED ? 0 : (subtotalDemo > 0 ? taxDemo / subtotalDemo : 0.19);
 
-/** Items para la vista Dividir (split) en formato SplitItem */
+/** Items para la vista Dividir (split) en formato SplitItem (quantity selector) */
 const DEMO_SPLIT_ITEMS: SplitItem[] = DEMO_BILL.items.map((item, index) => ({
 	id: `item-${index + 1}`,
 	text: item.name,
-	completed: false,
-	quantity: item.quantity,
 	price: item.price,
+	selectedByMe: 0,
+	maxSelectable: item.quantity,
+	disabled: false,
 }));
 
 export const Route = createFileRoute("/demo")({
@@ -115,7 +116,7 @@ function DemoPage() {
 	const handleSplitPayNow = useCallback(
 		(selectedItems: SplitItem[], _total: number) => {
 			const subtotal = selectedItems.reduce(
-				(s, i) => s + (i.price ?? 0) * (i.quantity ?? 1),
+				(s, i) => s + i.price * i.selectedByMe,
 				0
 			);
 			const tax = IVA_INCLUDED ? 0 : Math.round(subtotal * taxRateDemo);

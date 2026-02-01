@@ -62,6 +62,9 @@ export function useSessionCheckout(accessToken: string | null): SessionCheckoutR
 
 	const reserveItemMutation = useConvexMutation(api.sessions.reserveItem);
 	const releaseItemMutation = useConvexMutation(api.sessions.releaseItem);
+	const releaseAllReservedByClientMutation = useConvexMutation(
+		api.sessions.releaseAllReservedByClient
+	);
 	const markItemsAsPaidMutation = useConvexMutation(api.sessionPayments.markItemsAsPaid);
 
 	const itemActorsRef = useRef<Map<string, ReturnType<typeof createActor<typeof itemMachine>>>>(new Map());
@@ -73,6 +76,23 @@ export function useSessionCheckout(accessToken: string | null): SessionCheckoutR
 	const table = sessionData?.table ?? null;
 	const session = sessionData?.session ?? null;
 	const rows = sessionData?.items ?? [];
+
+	// Release all reserved items when user leaves the page (close tab / navigate away)
+	useEffect(() => {
+		if (!accessToken || !clientId) return;
+
+		const handleLeave = () => {
+			releaseAllReservedByClientMutation({ accessToken, clientId });
+		};
+
+		window.addEventListener("beforeunload", handleLeave);
+		window.addEventListener("pagehide", handleLeave);
+
+		return () => {
+			window.removeEventListener("beforeunload", handleLeave);
+			window.removeEventListener("pagehide", handleLeave);
+		};
+	}, [accessToken, clientId, releaseAllReservedByClientMutation]);
 
 	// Create or update item actors when session/items change
 	useEffect(() => {

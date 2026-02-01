@@ -75,20 +75,20 @@ export function BillReceipt({
         {/* Info Grid */}
         <div className="mb-6 grid grid-cols-2 gap-y-2 text-xs text-zinc-500">
           <div>
-            <span className="block font-medium text-zinc-900">Table: {tableNumber}</span>
-            <span>Server: {serverName}</span>
+            <span className="block font-medium text-zinc-900">Mesa: {tableNumber}</span>
+            <span>Mesero: {serverName}</span>
           </div>
           <div className="text-right">
-            <span className="block font-medium text-zinc-900">Date: {date}</span>
-            <span>Order #: {orderNumber}</span>
+            <span className="block font-medium text-zinc-900">Fecha: {date}</span>
+            <span>N° de pedido: {orderNumber}</span>
           </div>
         </div>
 
         {/* Items Header */}
         <div className="mb-2 grid grid-cols-12 text-xs font-semibold text-zinc-900">
           <div className="col-span-6">Item</div>
-          <div className="col-span-2 text-center">Qty</div>
-          <div className="col-span-4 text-right">Price</div>
+          <div className="col-span-2 text-center">#</div>
+          <div className="col-span-4 text-right">Precio</div>
         </div>
 
         <Separator className="mb-4" />
@@ -143,7 +143,7 @@ export function BillReceipt({
         {/* Footer */}
         <div className="mt-8 text-center">
           <p className="text-xs text-zinc-400">
-            Thank you for dining with us!
+            ¡Gracias por elegirnos!
           </p>
         </div>
       </div>

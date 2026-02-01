@@ -98,28 +98,79 @@ function PayPage() {
 	}, [checkout.items, checkout.reserve, effectiveSubtotal]);
 
 	const splitItems = useMemo(() => {
-		return checkout.items.map(({ row, snapshot }) => ({
-			id: row._id,
-			text: row.name,
-			quantity: row.quantity,
-			price: row.price,
-			completed: snapshot.context.reservedByClientId === checkout.clientId,
-			disabled:
+		const byGroup = new Map<
+			string,
+			{
+				name: string;
+				price: number;
+				availableIds: Id<"sessionItems">[];
+				reservedByMeIds: Id<"sessionItems">[];
+				totalCount: number;
+				reservedByOthersOrPaid: number;
+			}
+		>();
+		for (const { row, snapshot } of checkout.items) {
+			const key = `${row.name}|${row.price}`;
+			if (!byGroup.has(key)) {
+				byGroup.set(key, {
+					name: row.name,
+					price: row.price,
+					availableIds: [],
+					reservedByMeIds: [],
+					totalCount: 0,
+					reservedByOthersOrPaid: 0,
+				});
+			}
+			const g = byGroup.get(key)!;
+			g.totalCount++;
+			if (row.status === "available") {
+				g.availableIds.push(row._id);
+			} else if (
+				row.status === "reserved" &&
+				snapshot.context.reservedByClientId === checkout.clientId
+			) {
+				g.reservedByMeIds.push(row._id);
+			} else if (
 				row.status === "paid" ||
 				(row.status === "reserved" &&
-					snapshot.context.reservedByClientId !== checkout.clientId),
-		}));
+					snapshot.context.reservedByClientId !== checkout.clientId)
+			) {
+				g.reservedByOthersOrPaid++;
+			}
+		}
+		return Array.from(byGroup.entries()).map(([groupKey, g]) => {
+			const selectedByMe = g.reservedByMeIds.length;
+			const maxSelectable = g.totalCount - g.reservedByOthersOrPaid;
+			return {
+				id: groupKey,
+				groupKey,
+				text: g.name,
+				price: g.price,
+				selectedByMe,
+				maxSelectable,
+				disabled: maxSelectable === 0,
+				availableIds: g.availableIds,
+				reservedByMeIds: g.reservedByMeIds,
+			};
+		});
 	}, [checkout.items, checkout.clientId]);
 
-	const handleSplitToggle = useCallback(
-		(id: string) => {
-			const item = checkout.items.find((x) => x.row._id === id);
-			if (!item) return;
-			const reservedByMe = item.snapshot.context.reservedByClientId === checkout.clientId;
-			if (reservedByMe) checkout.release(id as Id<"sessionItems">);
-			else if (item.snapshot.value === "available") checkout.reserve(id as Id<"sessionItems">);
+	const handleSplitIncrement = useCallback(
+		(groupKey: string) => {
+			const group = splitItems.find((i) => i.groupKey === groupKey);
+			if (!group || group.availableIds.length === 0) return;
+			checkout.reserve(group.availableIds[0]);
 		},
-		[checkout.items, checkout.clientId, checkout.reserve, checkout.release]
+		[splitItems, checkout.reserve]
+	);
+
+	const handleSplitDecrement = useCallback(
+		(groupKey: string) => {
+			const group = splitItems.find((i) => i.groupKey === groupKey);
+			if (!group || group.reservedByMeIds.length === 0) return;
+			checkout.release(group.reservedByMeIds[0]);
+		},
+		[splitItems, checkout.release]
 	);
 
 	const handleSplitContinue = useCallback(() => {
@@ -322,7 +373,7 @@ function PayPage() {
 	}
 
 	if (view === "split") {
-		const reservedCount = splitItems.filter((i) => i.completed).length;
+		const reservedCount = splitItems.reduce((sum, i) => sum + i.selectedByMe, 0);
 		return (
 			<div className="min-h-screen bg-zinc-50 pb-32 dark:bg-zinc-950">
 				<PageHeader
@@ -331,26 +382,15 @@ function PayPage() {
 					onBack={handleBackFromSplit}
 				/>
 				<main className="mx-auto max-w-lg px-4 py-6">
-					<div className="mb-6 text-center">
-						<div className="mb-2 flex items-center justify-center gap-2">
-							<div className="size-6 rounded-full bg-gradient-to-br from-[var(--brand-primary)] to-[var(--brand-secondary)]" />
-							<span className="text-sm font-medium text-zinc-900 dark:text-white">
-								Cuenta
-							</span>
-						</div>
-						<p className="text-xs text-zinc-500 dark:text-zinc-400">
-							{new Date().toLocaleDateString("es-CL", {
-								day: "numeric",
-								month: "short",
-								year: "numeric",
-							})}
-						</p>
-					</div>
 					<p className="mb-4 text-center text-sm text-zinc-500 dark:text-zinc-400">
 						Selecciona los ítems que quieres pagar
 					</p>
 					<div className="overflow-hidden rounded-2xl border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900">
-						<ItemSelectorList items={splitItems} onToggle={handleSplitToggle} />
+						<ItemSelectorList
+							items={splitItems}
+							onIncrement={handleSplitIncrement}
+							onDecrement={handleSplitDecrement}
+						/>
 					</div>
 					{reservedCount > 0 && (
 						<div className="fixed bottom-0 left-0 right-0 z-10 p-4 bg-white/95 dark:bg-zinc-900/95 border-t border-zinc-200 dark:border-zinc-800">

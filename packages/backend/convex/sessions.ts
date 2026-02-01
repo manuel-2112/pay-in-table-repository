@@ -147,6 +147,7 @@ export const reserveItem = mutation({
 		await ctx.db.patch(args.sessionItemId, {
 			status: "reserved",
 			reservedByClientId: args.clientId,
+			reservedAt: Date.now(),
 		});
 		return args.sessionItemId;
 	},
@@ -179,8 +180,96 @@ export const releaseItem = mutation({
 		await ctx.db.patch(args.sessionItemId, {
 			status: "available",
 			reservedByClientId: undefined,
+			reservedAt: undefined,
 		});
 		return args.sessionItemId;
+	},
+});
+
+/**
+ * Release all items reserved by a client in the session for the given table token (e.g. on page leave).
+ * Idempotent: no-op if table/session not found or no reserved items.
+ */
+export const releaseAllReservedByClient = mutation({
+	args: {
+		accessToken: v.string(),
+		clientId: v.string(),
+	},
+	handler: async (ctx, args) => {
+		const table = await ctx.db
+			.query("tables")
+			.withIndex("by_access_token", (q) => q.eq("accessToken", args.accessToken))
+			.first();
+
+		if (!table) return;
+
+		const activeSession = await ctx.db
+			.query("sessions")
+			.withIndex("by_table_id_status", (q) =>
+				q.eq("tableId", table._id).eq("status", "active")
+			)
+			.first();
+
+		if (!activeSession) return;
+
+		const items = await ctx.db
+			.query("sessionItems")
+			.withIndex("by_session_id", (q) => q.eq("sessionId", activeSession._id))
+			.collect();
+
+		const toRelease = items.filter(
+			(i) => i.status === "reserved" && i.reservedByClientId === args.clientId
+		);
+
+		for (const item of toRelease) {
+			await ctx.db.patch(item._id, {
+				status: "available",
+				reservedByClientId: undefined,
+				reservedAt: undefined,
+			});
+		}
+	},
+});
+
+/** Max time a reservation is held before auto-release (5 minutes). */
+const RESERVATION_TIMEOUT_MS = 5 * 60 * 1000;
+
+/**
+ * Release reserved items that have been held longer than RESERVATION_TIMEOUT_MS.
+ * Intended to be run by a cron job every 2–5 minutes.
+ */
+export const releaseStaleReservations = mutation({
+	args: {},
+	handler: async (ctx) => {
+		const now = Date.now();
+		const cutoff = now - RESERVATION_TIMEOUT_MS;
+
+		const activeSessions = await ctx.db
+			.query("sessions")
+			.filter((q) => q.eq(q.field("status"), "active"))
+			.collect();
+
+		for (const session of activeSessions) {
+			const items = await ctx.db
+				.query("sessionItems")
+				.withIndex("by_session_id", (q) => q.eq("sessionId", session._id))
+				.collect();
+
+			const stale = items.filter(
+				(i) =>
+					i.status === "reserved" &&
+					i.reservedAt != null &&
+					i.reservedAt < cutoff
+			);
+
+			for (const item of stale) {
+				await ctx.db.patch(item._id, {
+					status: "available",
+					reservedByClientId: undefined,
+					reservedAt: undefined,
+				});
+			}
+		}
 	},
 });
 

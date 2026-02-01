@@ -1,8 +1,7 @@
 /**
- * ItemSelectorList - Presentational list of selectable items
+ * ItemSelectorList - Presentational list of items with quantity selector
  *
- * Renders a list of ItemSelectorRow components with layout animations.
- * For Split page to allow users to select which items they want to pay for.
+ * Renders a list of ItemSelectorRow (one per product, with +/−).
  * Dummy component - receives all data via props, no internal state/logic.
  */
 
@@ -12,20 +11,27 @@ import { ItemSelectorRow, type SplitItem } from "./item-selector-row";
 
 interface ItemSelectorListProps {
   items: SplitItem[];
-  onToggle: (id: string) => void;
+  onIncrement: (groupKey: string) => void;
+  onDecrement: (groupKey: string) => void;
   className?: string;
 }
 
 export function ItemSelectorList({
   items,
-  onToggle,
+  onIncrement,
+  onDecrement,
   className,
 }: ItemSelectorListProps) {
   return (
     <div className={cn("space-y-1", className)}>
       <AnimatePresence mode="popLayout">
         {items.map((item) => (
-          <ItemSelectorRow key={item.id} item={item} onToggle={onToggle} />
+          <ItemSelectorRow
+            key={item.id}
+            item={item}
+            onIncrement={onIncrement}
+            onDecrement={onDecrement}
+          />
         ))}
       </AnimatePresence>
     </div>

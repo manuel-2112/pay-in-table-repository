@@ -34,9 +34,9 @@ export const CustomButton = React.forwardRef<HTMLButtonElement, CustomButtonProp
     } as React.CSSProperties;
 
     // Base classes for the premium look
-    const premiumClasses = "shadow-[0_4px_14px_0_color-mix(in_srgb,var(--btn-color),transparent_61%)] hover:shadow-[0_6px_20px_rgba(0,0,0,0.23)] hover:bg-[color-mix(in_srgb,var(--btn-color),transparent_10%)] px-8 py-2 bg-[var(--btn-color)] rounded-md text-[var(--btn-text-color,white)] font-light transition duration-200 ease-linear hover:opacity-95";
+    const premiumClasses = "shadow-[0_4px_14px_0_color-mix(in_srgb,var(--btn-color),transparent_61%)] hover:shadow-[0_6px_20px_rgba(0,0,0,0.23)] hover:bg-[color-mix(in_srgb,var(--btn-color),transparent_10%)] px-8 py-2 bg-[var(--btn-color)] rounded-full text-[var(--btn-text-color,white)] font-light transition duration-200 ease-linear hover:opacity-95";
 
-    // Apply premium style when variant is default/undefined
+    // Apply premium style when variant is default/undefined; brandSecondary uses button variant only
     const isDefault = !variant || variant === "default";
     
     return (
@@ -48,7 +48,8 @@ export const CustomButton = React.forwardRef<HTMLButtonElement, CustomButtonProp
         style={isDefault ? style : undefined}
         className={cn(
           isDefault && premiumClasses,
-          isDefault && "hover:bg-[var(--btn-color)]", 
+          isDefault && "hover:bg-[var(--btn-color)]",
+          variant === "brandSecondary" && "rounded-full",
           className
         )}
         {...props}
