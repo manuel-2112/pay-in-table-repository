@@ -66,7 +66,9 @@ export function useSessionCheckout(accessToken: string | null): SessionCheckoutR
 
 	const itemActorsRef = useRef<Map<string, ReturnType<typeof createActor<typeof itemMachine>>>>(new Map());
 	const coordinatorActorRef = useRef<ReturnType<typeof createActor<typeof checkoutCoordinatorMachine>> | null>(null);
-	const [, forceUpdate] = useState(0);
+	// Increment when actors update so items useMemo re-runs and we read fresh snapshots (single source of truth).
+	const [actorUpdateTick, setActorUpdateTick] = useState(0);
+	const forceUpdate = useCallback(() => setActorUpdateTick((t) => t + 1), []);
 
 	const table = sessionData?.table ?? null;
 	const session = sessionData?.session ?? null;
@@ -114,7 +116,7 @@ export function useSessionCheckout(accessToken: string | null): SessionCheckoutR
 				},
 			});
 			actor.start();
-			actor.subscribe(() => forceUpdate((n) => n + 1));
+			actor.subscribe(forceUpdate);
 			existing.set(id, actor);
 		}
 
@@ -149,7 +151,7 @@ export function useSessionCheckout(accessToken: string | null): SessionCheckoutR
 				input: undefined,
 			});
 			coordinator.start();
-			coordinator.subscribe(() => forceUpdate((n) => n + 1));
+			coordinator.subscribe(forceUpdate);
 			coordinatorActorRef.current = coordinator;
 		}
 		const coordinator = coordinatorActorRef.current;
@@ -170,12 +172,17 @@ export function useSessionCheckout(accessToken: string | null): SessionCheckoutR
 		}
 	}, [sessionData, accessToken, clientId]);
 
-	// Build items list with snapshots and compute total for this client
+	// Build items list from rows only (single source of truth). Dedupe by row._id.
+	// Re-run when rows or actorUpdateTick change so we read fresh snapshots after reserve/release.
 	const items = useMemo(() => {
 		const list: Array<{ row: SessionItemRow; snapshot: ItemActorSnapshot }> = [];
 		const actors = itemActorsRef.current;
+		const seenIds = new Set<string>();
 		for (const row of rows) {
-			const actor = actors.get(row._id);
+			const id = row._id;
+			if (seenIds.has(id)) continue;
+			seenIds.add(id);
+			const actor = actors.get(id);
 			if (!actor) continue;
 			const snapshot = actor.getSnapshot();
 			list.push({
@@ -188,8 +195,12 @@ export function useSessionCheckout(accessToken: string | null): SessionCheckoutR
 				},
 			});
 		}
-		return list;
-	}, [rows, forceUpdate]);
+		// Guarantee one entry per sessionItemId (defensive against any duplicate in rows).
+		return list.filter(
+			(item, index, arr) =>
+				arr.findIndex((x) => x.row._id === item.row._id) === index
+		);
+	}, [rows, actorUpdateTick]);
 
 	const totalToPayCents = useMemo(() => {
 		return items
