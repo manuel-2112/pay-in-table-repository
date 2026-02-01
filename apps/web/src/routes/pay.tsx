@@ -381,11 +381,11 @@ function PayPage() {
 					subtitle={tableLabel}
 					onBack={handleBackFromSplit}
 				/>
-				<main className="mx-auto max-w-lg px-4 py-6">
-					<p className="mb-4 text-center text-sm text-zinc-500 dark:text-zinc-400">
+				<main className="mx-auto max-w-lg px-4 py-4">
+					<p className="mb-3 text-center text-xs text-zinc-500 dark:text-zinc-400">
 						Selecciona los ítems que quieres pagar
 					</p>
-					<div className="overflow-hidden rounded-2xl border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900">
+					<div className="overflow-hidden rounded-xl border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900">
 						<ItemSelectorList
 							items={splitItems}
 							onIncrement={handleSplitIncrement}

@@ -72,38 +72,38 @@ export function PageHeader({
         className
       )}
     >
-      <div className="mx-auto flex max-w-lg items-center gap-4 px-4 py-4">
+      <div className="mx-auto flex max-w-lg items-center gap-3 px-4 py-2.5">
         {/* Back Button */}
         {(onBack || backHref) && !hideBack && (
-          <div className="-ml-2">
+          <div className="-ml-1">
             {onBack ? (
               <button
                 onClick={onBack}
                 type="button"
-                className="flex items-center justify-center rounded-full p-2 transition-colors hover:bg-zinc-100 dark:hover:bg-zinc-800"
+                className="flex items-center justify-center rounded-full p-1.5 transition-colors hover:bg-zinc-100 dark:hover:bg-zinc-800"
                 aria-label="Go back"
               >
-                <ArrowLeft className="size-5 text-zinc-600 dark:text-zinc-400" />
+                <ArrowLeft className="size-4 text-zinc-600 dark:text-zinc-400" />
               </button>
             ) : (
               <Link
                 to={backHref!}
-                className="flex items-center justify-center rounded-full p-2 transition-colors hover:bg-zinc-100 dark:hover:bg-zinc-800"
+                className="flex items-center justify-center rounded-full p-1.5 transition-colors hover:bg-zinc-100 dark:hover:bg-zinc-800"
                 aria-label="Go back"
               >
-                <ArrowLeft className="size-5 text-zinc-600 dark:text-zinc-400" />
+                <ArrowLeft className="size-4 text-zinc-600 dark:text-zinc-400" />
               </Link>
             )}
           </div>
         )}
 
         {/* Title & Subtitle */}
-        <div className="flex-1">
-          <h1 className="text-lg font-semibold text-zinc-900 dark:text-white">
+        <div className="flex-1 min-w-0">
+          <h1 className="text-base font-semibold text-zinc-900 dark:text-white truncate">
             {title}
           </h1>
           {subtitle && (
-            <p className="text-xs text-zinc-500 dark:text-zinc-400">
+            <p className="text-xs text-zinc-500 dark:text-zinc-400 truncate">
               {subtitle}
             </p>
           )}

@@ -23,7 +23,7 @@ export function ItemSelectorList({
   className,
 }: ItemSelectorListProps) {
   return (
-    <div className={cn("space-y-1", className)}>
+    <div className={cn("space-y-0.5 py-1", className)}>
       <AnimatePresence mode="popLayout">
         {items.map((item) => (
           <ItemSelectorRow

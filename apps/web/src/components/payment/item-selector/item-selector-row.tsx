@@ -49,7 +49,7 @@ export function ItemSelectorRow({ item, onIncrement, onDecrement }: ItemSelector
       exit={{ opacity: 0, y: -10 }}
       transition={{ duration: 0.2 }}
       className={cn(
-        "group flex items-center gap-4 rounded-xl px-4 py-3 transition-colors duration-200",
+        "group flex items-center gap-3 rounded-lg px-3 py-2 transition-colors duration-200",
         isDisabled
           ? "cursor-not-allowed bg-zinc-50/30 dark:bg-zinc-800/20"
           : "hover:bg-zinc-50 dark:hover:bg-zinc-800/50",
@@ -61,7 +61,7 @@ export function ItemSelectorRow({ item, onIncrement, onDecrement }: ItemSelector
         <div className="relative inline-block">
           <motion.span
             className={cn(
-              "text-sm font-medium transition-colors duration-200",
+              "text-xs font-medium transition-colors duration-200",
               isDisabled && "text-zinc-400 dark:text-zinc-500",
               !isDisabled &&
                 (atMax
@@ -75,7 +75,7 @@ export function ItemSelectorRow({ item, onIncrement, onDecrement }: ItemSelector
         </div>
         <p
           className={cn(
-            "mt-0.5 text-xs tabular-nums transition-colors duration-200",
+            "mt-0.5 text-[11px] tabular-nums transition-colors duration-200",
             (isDisabled || atMax)
               ? "text-zinc-400 dark:text-zinc-500"
               : "text-zinc-500 dark:text-zinc-400"
@@ -93,7 +93,7 @@ export function ItemSelectorRow({ item, onIncrement, onDecrement }: ItemSelector
           disabled={!canDecrement}
           onClick={handleDecrement}
           className={cn(
-            "flex h-7 w-7 items-center justify-center rounded-full border-2 text-sm font-medium transition-colors",
+            "flex h-6 w-6 items-center justify-center rounded-full border-2 text-xs font-medium transition-colors",
             canDecrement
               ? "border-zinc-300 text-zinc-700 hover:border-[var(--brand-primary)] hover:text-[var(--brand-primary)] dark:border-zinc-600 dark:text-zinc-300"
               : "cursor-not-allowed border-zinc-200 text-zinc-400 dark:border-zinc-700 dark:text-zinc-500"
@@ -103,7 +103,7 @@ export function ItemSelectorRow({ item, onIncrement, onDecrement }: ItemSelector
         </button>
         <span
           className={cn(
-            "min-w-[1.25rem] text-center text-sm font-medium tabular-nums",
+            "min-w-[1rem] text-center text-xs font-medium tabular-nums",
             isDisabled ? "text-zinc-400 dark:text-zinc-500" : "text-zinc-800 dark:text-zinc-200"
           )}
         >
@@ -115,7 +115,7 @@ export function ItemSelectorRow({ item, onIncrement, onDecrement }: ItemSelector
           disabled={!canIncrement}
           onClick={handleIncrement}
           className={cn(
-            "flex h-7 w-7 items-center justify-center rounded-full border-2 text-sm font-medium transition-colors",
+            "flex h-6 w-6 items-center justify-center rounded-full border-2 text-xs font-medium transition-colors",
             canIncrement
               ? "border-zinc-300 text-zinc-700 hover:border-[var(--brand-primary)] hover:text-[var(--brand-primary)] dark:border-zinc-600 dark:text-zinc-300"
               : "cursor-not-allowed border-zinc-200 text-zinc-400 dark:border-zinc-700 dark:text-zinc-500"
