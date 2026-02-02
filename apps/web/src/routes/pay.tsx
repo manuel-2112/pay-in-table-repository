@@ -13,6 +13,9 @@ import { TipSelectorView } from "@/components/payment/tip-selector";
 import { FloatingPaymentPanel } from "@/components/payment/checkout";
 import { FintocCheckout } from "@/components/payment/fintoc";
 import { ItemSelectorList } from "@/components/payment/item-selector";
+import { QuantityPill } from "@/components/payment/quantity-pill";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Progress } from "@/components/ui/progress";
 import { CustomButton } from "@/components/design-system/ui/custom-button";
 import { useSessionCheckout } from "@/lib/xstate";
 import { DEFAULT_TIP_PERCENTAGE } from "@/lib/constants/payment";
@@ -61,11 +64,17 @@ function PayPage() {
 	const [paidTotal, setPaidTotal] = useState(0);
 	const [seedItemsLoading, setSeedItemsLoading] = useState(false);
 	const [seedItemsError, setSeedItemsError] = useState<string | null>(null);
+	// Por partes iguales: total parts and parts I pay (partsToPay <= totalParts)
+	const [totalParts, setTotalParts] = useState(5);
+	const [partsToPay, setPartsToPay] = useState(3);
+	// Tab activo en vista split; monto a pagar cuando se continúa por "por partes"
+	const [splitTab, setSplitTab] = useState<"items" | "equal" | "amount">("items");
+	const [equalPartsAmountCents, setEqualPartsAmountCents] = useState<number | null>(null);
 
 	const ACTION_TIMEOUT_MS = 15_000;
 
 	const reservedSubtotal = checkout.coordinatorSnapshot.context.totalToPayCents;
-	const effectiveSubtotal = reservedSubtotal;
+	const effectiveSubtotal = equalPartsAmountCents ?? reservedSubtotal;
 	const effectiveTax = 0;
 	const totalToPay = effectiveSubtotal + currentTip;
 
@@ -83,10 +92,13 @@ function PayPage() {
 	}, []);
 
 	const handleBackFromTip = useCallback(() => {
-		setView(reservedSubtotal > 0 ? "split" : "hero");
-	}, [reservedSubtotal]);
+		setView(equalPartsAmountCents != null || reservedSubtotal > 0 ? "split" : "hero");
+	}, [equalPartsAmountCents, reservedSubtotal]);
 
-	const handleBackFromSplit = useCallback(() => setView("hero"), []);
+	const handleBackFromSplit = useCallback(() => {
+		setView("hero");
+		setEqualPartsAmountCents(null);
+	}, []);
 
 	const handlePayAll = useCallback(() => {
 		checkout.items.forEach(({ row, snapshot }) => {
@@ -173,11 +185,20 @@ function PayPage() {
 		[splitItems, checkout.release]
 	);
 
+	const sessionTotalCents =
+		checkout.session?.totalAmountCents ??
+		checkout.items.reduce((s, x) => s + x.row.price * x.row.quantity, 0);
+
 	const handleSplitContinue = useCallback(() => {
-		setCurrentTip(Math.round(reservedSubtotal * (DEFAULT_TIP_PERCENTAGE / 100)));
+		const base =
+			splitTab === "equal" && sessionTotalCents > 0 && totalParts > 0
+				? Math.round(sessionTotalCents * (partsToPay / totalParts))
+				: reservedSubtotal;
+		if (splitTab === "equal") setEqualPartsAmountCents(base);
+		setCurrentTip(Math.round(base * (DEFAULT_TIP_PERCENTAGE / 100)));
 		setSelectedPreset(DEFAULT_TIP_PERCENTAGE);
 		setView("tip");
-	}, [reservedSubtotal]);
+	}, [reservedSubtotal, splitTab, sessionTotalCents, totalParts, partsToPay]);
 
 	const handlePayNow = useCallback(async () => {
 		setCheckoutError(null);
@@ -240,6 +261,7 @@ function PayPage() {
 		setCheckoutLoading(false);
 		setCheckoutError(null);
 		setFintocSessionToken(null);
+		setEqualPartsAmountCents(null);
 	}, []);
 
 	if (isChildRoute) {
@@ -382,26 +404,87 @@ function PayPage() {
 					onBack={handleBackFromSplit}
 				/>
 				<main className="mx-auto max-w-lg px-4 py-4">
-					<p className="mb-3 text-center text-xs text-zinc-500 dark:text-zinc-400">
-						Selecciona los ítems que quieres pagar
-					</p>
-					<div className="overflow-hidden rounded-xl border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900">
-						<ItemSelectorList
-							items={splitItems}
-							onIncrement={handleSplitIncrement}
-							onDecrement={handleSplitDecrement}
-						/>
-					</div>
-					{reservedCount > 0 && (
+					<Tabs value={splitTab} onValueChange={(v) => setSplitTab(v as "items" | "equal" | "amount")} className="w-full">
+						<TabsList className="grid w-full grid-cols-3">
+							<TabsTrigger value="items">Por ítems</TabsTrigger>
+							<TabsTrigger value="equal">Por partes</TabsTrigger>
+							<TabsTrigger value="amount">Por monto</TabsTrigger>
+						</TabsList>
+						<TabsContent value="items" className="mt-3">
+							<p className="mb-3 text-center text-xs text-zinc-500 dark:text-zinc-400">
+								Selecciona los ítems que quieres pagar
+							</p>
+							<div className="overflow-hidden rounded-xl border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900">
+								<ItemSelectorList
+									items={splitItems}
+									onIncrement={handleSplitIncrement}
+									onDecrement={handleSplitDecrement}
+								/>
+							</div>
+						</TabsContent>
+						<TabsContent value="equal" className="mt-3">
+							<p className="mb-4 text-left text-xs text-zinc-500 dark:text-zinc-400">
+								Divide el total en partes iguales y elige cuántas pagas
+							</p>
+							<div className="mb-4">
+								<Progress value={totalParts > 0 ? (partsToPay / totalParts) * 100 : 0} className="h-2" />
+							</div>
+							<div className="flex justify-center rounded-xl border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-900">
+								<div className="flex flex-col gap-4 w-max items-start">
+									<QuantityPill
+										value={totalParts}
+										min={1}
+										max={20}
+										onIncrement={() => setTotalParts((p) => Math.min(20, p + 1))}
+										onDecrement={() => {
+											setTotalParts((p) => Math.max(1, p - 1));
+											setPartsToPay((pay) => Math.min(pay, totalParts - 1));
+										}}
+										label="partes totales"
+										aria-label="Partes en que se divide la cuenta"
+									/>
+									<QuantityPill
+										value={partsToPay}
+										min={1}
+										max={totalParts}
+										onIncrement={() => setPartsToPay((p) => Math.min(totalParts, p + 1))}
+										onDecrement={() => setPartsToPay((p) => Math.max(1, p - 1))}
+										label="tú pagas"
+										aria-label="Partes que tú pagas"
+									/>
+								</div>
+							</div>
+						</TabsContent>
+						<TabsContent value="amount" className="mt-3">
+							<p className="mb-3 text-center text-xs text-zinc-500 dark:text-zinc-400">
+								Indica el monto que quieres pagar
+							</p>
+							<div className="rounded-xl border border-zinc-200 bg-white p-6 dark:border-zinc-800 dark:bg-zinc-900">
+								<p className="text-center text-sm text-zinc-500 dark:text-zinc-400">
+									Próximamente: división por monto
+								</p>
+							</div>
+						</TabsContent>
+					</Tabs>
+					{(reservedCount > 0 || (splitTab === "equal" && partsToPay > 0)) && (
 						<div className="fixed bottom-0 left-0 right-0 z-10 p-4 bg-white/95 dark:bg-zinc-900/95 border-t border-zinc-200 dark:border-zinc-800">
 							<FloatingPaymentPanel
-								selectedCount={reservedCount}
-								subtotal={reservedSubtotal}
+								selectedCount={splitTab === "equal" ? 0 : reservedCount}
+								subtotal={
+									splitTab === "equal" && sessionTotalCents > 0 && totalParts > 0
+										? Math.round(sessionTotalCents * (partsToPay / totalParts))
+										: reservedSubtotal
+								}
 								tax={0}
-								total={reservedSubtotal}
+								total={
+									splitTab === "equal" && sessionTotalCents > 0 && totalParts > 0
+										? Math.round(sessionTotalCents * (partsToPay / totalParts))
+										: reservedSubtotal
+								}
 								onPayNow={handleSplitContinue}
 								label="Continuar"
 								alwaysVisible
+								subtitle={splitTab === "equal" ? `${partsToPay} de ${totalParts} partes` : undefined}
 							/>
 						</div>
 					)}

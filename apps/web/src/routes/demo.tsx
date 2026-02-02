@@ -17,6 +17,9 @@ import { TipSelectorView } from "@/components/payment/tip-selector";
 import { FloatingPaymentPanel } from "@/components/payment/checkout";
 import { FintocCheckout } from "@/components/payment/fintoc";
 import { ItemSelectorContainer, type SplitItem } from "@/components/payment/item-selector";
+import { QuantityPill } from "@/components/payment/quantity-pill";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Progress } from "@/components/ui/progress";
 import { CustomButton } from "@/components/design-system/ui/custom-button";
 import { calculateTax } from "@/lib/utils/validation";
 import { DEMO_LOGO_DATA_URL } from "@/lib/constants/demo-assets";
@@ -84,6 +87,10 @@ function DemoPage() {
 	/** Cuando viene de Dividir: subtotal y tax de los items seleccionados */
 	const [splitSubtotal, setSplitSubtotal] = useState<number | null>(null);
 	const [splitTax, setSplitTax] = useState<number | null>(null);
+	// Por partes iguales
+	const [totalParts, setTotalParts] = useState(5);
+	const [partsToPay, setPartsToPay] = useState(3);
+	const [splitTab, setSplitTab] = useState<"items" | "equal" | "amount">("items");
 
 	const createFintocSession = useConvexAction(api.fintoc.createFintocCheckoutSession);
 
@@ -128,6 +135,17 @@ function DemoPage() {
 		},
 		[]
 	);
+
+	const handleEqualPartsContinue = useCallback(() => {
+		if (totalParts <= 0) return;
+		const subtotal = Math.round(totalBillDemo * (partsToPay / totalParts));
+		const tax = IVA_INCLUDED ? 0 : Math.round(subtotal * taxRateDemo);
+		setSplitSubtotal(subtotal);
+		setSplitTax(tax);
+		setCurrentTip(Math.round(subtotal * (DEFAULT_TIP_PERCENTAGE / 100)));
+		setSelectedPreset(DEFAULT_TIP_PERCENTAGE);
+		setView("tip");
+	}, [totalParts, partsToPay]);
 
 	/** Demo: crea sesión Fintoc con el monto real y abre el widget */
 	const handlePayNow = useCallback(async () => {
@@ -236,7 +254,7 @@ function DemoPage() {
 					onBack={handleBackFromSplit}
 				/>
 				<main className="mx-auto max-w-lg px-4 py-6">
-					<div className="mb-6 text-center">
+					<div className="mb-4 text-center">
 						<div className="mb-2 flex items-center justify-center gap-2">
 							<div className="size-6 rounded-full bg-gradient-to-br from-[var(--brand-primary)] to-[var(--brand-secondary)]" />
 							<span className="text-sm font-medium text-zinc-900 dark:text-white">
@@ -247,17 +265,87 @@ function DemoPage() {
 							{DEMO_BILL.date} · {DEMO_BILL.serverName}
 						</p>
 					</div>
-					<p className="mb-4 text-center text-sm text-zinc-500 dark:text-zinc-400">
-						Selecciona los items que quieres pagar
-					</p>
-					<div className="overflow-hidden rounded-2xl border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900">
-						<ItemSelectorContainer
-							initialItems={DEMO_SPLIT_ITEMS}
-							taxRate={taxRateDemo}
-							onPayNow={handleSplitPayNow}
-							label="Continuar"
-						/>
-					</div>
+					<Tabs value={splitTab} onValueChange={(v) => setSplitTab(v as "items" | "equal" | "amount")} className="w-full">
+						<TabsList className="grid w-full grid-cols-3">
+							<TabsTrigger value="items">Por ítems</TabsTrigger>
+							<TabsTrigger value="equal">Por partes</TabsTrigger>
+							<TabsTrigger value="amount">Por monto</TabsTrigger>
+						</TabsList>
+						<TabsContent value="items" className="mt-3">
+							<p className="mb-4 text-center text-sm text-zinc-500 dark:text-zinc-400">
+								Selecciona los items que quieres pagar
+							</p>
+							<div className="overflow-hidden rounded-2xl border border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-900">
+								<ItemSelectorContainer
+									initialItems={DEMO_SPLIT_ITEMS}
+									taxRate={taxRateDemo}
+									onPayNow={handleSplitPayNow}
+									label="Continuar"
+								/>
+							</div>
+						</TabsContent>
+						<TabsContent value="equal" className="mt-3">
+							<p className="mb-4 text-left text-xs text-zinc-500 dark:text-zinc-400">
+								Divide el total en partes iguales y elige cuántas pagas
+							</p>
+							<div className="mb-4">
+								<div className="mb-1.5 flex justify-between text-xs text-zinc-500 dark:text-zinc-400">
+									<span>Fracción a pagar</span>
+									<span>{partsToPay} / {totalParts}</span>
+								</div>
+								<Progress value={totalParts > 0 ? (partsToPay / totalParts) * 100 : 0} className="h-2" />
+							</div>
+							<div className="flex justify-center rounded-xl border border-zinc-200 bg-white p-4 dark:border-zinc-800 dark:bg-zinc-900">
+								<div className="flex flex-col gap-4 w-max items-start">
+									<QuantityPill
+										value={totalParts}
+										min={1}
+										max={20}
+										onIncrement={() => setTotalParts((p) => Math.min(20, p + 1))}
+										onDecrement={() => {
+											setTotalParts((p) => Math.max(1, p - 1));
+											setPartsToPay((pay) => Math.min(pay, totalParts - 1));
+										}}
+										label="partes totales"
+										aria-label="Partes en que se divide la cuenta"
+									/>
+									<QuantityPill
+										value={partsToPay}
+										min={1}
+										max={totalParts}
+										onIncrement={() => setPartsToPay((p) => Math.min(totalParts, p + 1))}
+										onDecrement={() => setPartsToPay((p) => Math.max(1, p - 1))}
+										label="tú pagas"
+										aria-label="Partes que tú pagas"
+									/>
+								</div>
+							</div>
+						</TabsContent>
+						<TabsContent value="amount" className="mt-3">
+							<p className="mb-3 text-center text-xs text-zinc-500 dark:text-zinc-400">
+								Indica el monto que quieres pagar
+							</p>
+							<div className="rounded-xl border border-zinc-200 bg-white p-6 dark:border-zinc-800 dark:bg-zinc-900">
+								<p className="text-center text-sm text-zinc-500 dark:text-zinc-400">
+									Próximamente: división por monto
+								</p>
+							</div>
+						</TabsContent>
+					</Tabs>
+					{splitTab === "equal" && partsToPay > 0 && (
+						<div className="fixed bottom-0 left-0 right-0 z-10 p-4 bg-white/95 dark:bg-zinc-900/95 border-t border-zinc-200 dark:border-zinc-800">
+							<FloatingPaymentPanel
+								selectedCount={0}
+								subtotal={Math.round(totalBillDemo * (partsToPay / totalParts))}
+								tax={IVA_INCLUDED ? 0 : Math.round(totalBillDemo * (partsToPay / totalParts) * taxRateDemo)}
+								total={Math.round(totalBillDemo * (partsToPay / totalParts))}
+								onPayNow={handleEqualPartsContinue}
+								label="Continuar"
+								alwaysVisible
+								subtitle={`${partsToPay} de ${totalParts} partes`}
+							/>
+						</div>
+					)}
 				</main>
 			</div>
 		);
