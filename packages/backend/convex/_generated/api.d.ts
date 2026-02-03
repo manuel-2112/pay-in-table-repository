@@ -14,7 +14,9 @@ import type * as http from "../http.js";
 import type * as payments from "../payments.js";
 import type * as restaurants from "../restaurants.js";
 import type * as seed from "../seed.js";
+import type * as sessionEqualParts from "../sessionEqualParts.js";
 import type * as sessionPayments from "../sessionPayments.js";
+import type * as sessionSplitByAmount from "../sessionSplitByAmount.js";
 import type * as sessions from "../sessions.js";
 import type * as tables from "../tables.js";
 
@@ -39,7 +41,9 @@ declare const fullApi: ApiFromModules<{
   payments: typeof payments;
   restaurants: typeof restaurants;
   seed: typeof seed;
+  sessionEqualParts: typeof sessionEqualParts;
   sessionPayments: typeof sessionPayments;
+  sessionSplitByAmount: typeof sessionSplitByAmount;
   sessions: typeof sessions;
   tables: typeof tables;
 }>;

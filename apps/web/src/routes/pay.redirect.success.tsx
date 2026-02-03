@@ -1,22 +1,26 @@
 /**
  * Pay redirect – success return URL.
  * Fintoc redirects here after successful payment. Read token from search,
- * restore amount from sessionStorage, call confirmPayment, then show success.
+ * restore payload from sessionStorage, call confirmPayment or payEqualPartSlotsByCount, then show success.
  */
 
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useEffect, useRef, useState } from "react";
+import { useConvexMutation } from "@convex-dev/react-query";
+import { api } from "@pay-in-table-repository/backend/convex/_generated/api";
 import { MobileContainer, PageHeader } from "@/components/design-system/layout";
 import { CustomButton } from "@/components/design-system/ui/custom-button";
 import { useSessionCheckout } from "@/lib/xstate";
+import type { Id } from "@pay-in-table-repository/backend/convex/_generated/dataModel";
+import type { PayRedirectPayload } from "./pay";
 
 const PAY_REDIRECT_STORAGE_KEY = "payRedirect";
 
-function getRedirectPayload(): { amount: number; currency: string; status: string } | null {
+function getRedirectPayload(): PayRedirectPayload | null {
 	try {
 		const raw = sessionStorage.getItem(PAY_REDIRECT_STORAGE_KEY);
 		if (!raw) return null;
-		const data = JSON.parse(raw) as { amount: number; currency: string; status: string };
+		const data = JSON.parse(raw) as PayRedirectPayload;
 		sessionStorage.removeItem(PAY_REDIRECT_STORAGE_KEY);
 		return data;
 	} catch {
@@ -34,7 +38,9 @@ export const Route = createFileRoute("/pay/redirect/success")({
 function PayRedirectSuccessPage() {
 	const { token } = Route.useSearch();
 	const checkout = useSessionCheckout(token ?? null);
-	const payloadRef = useRef<{ amount: number; currency: string; status: string } | null>(null);
+	const payEqualPartSlotsByCountMutation = useConvexMutation(api.sessionEqualParts.payEqualPartSlotsByCount);
+	const payAmountSlotMutation = useConvexMutation(api.sessionSplitByAmount.payAmountSlot);
+	const payloadRef = useRef<PayRedirectPayload | null>(null);
 	const [paidAmount, setPaidAmount] = useState(0);
 
 	if (payloadRef.current === null) {
@@ -44,14 +50,37 @@ function PayRedirectSuccessPage() {
 	useEffect(() => {
 		const payload = payloadRef.current;
 		if (!token || !payload || !checkout.session) return;
-		checkout.confirmPayment({
-			amount: payload.amount,
-			currency: payload.currency,
-			status: payload.status,
-		});
-		setPaidAmount(payload.amount);
+		const run = async () => {
+			if (payload.paymentType === "by_amount" && payload.sessionSplitByAmountSlotId) {
+				await payAmountSlotMutation({
+					accessToken: token,
+					sessionSplitByAmountSlotId: payload.sessionSplitByAmountSlotId as Id<"sessionSplitByAmountSlots">,
+					amount: payload.amount,
+					currency: payload.currency,
+					status: payload.status,
+					clientId: checkout.clientId,
+				});
+			} else if (payload.paymentType === "equal_parts" && payload.partsToPay != null) {
+				await payEqualPartSlotsByCountMutation({
+					accessToken: token,
+					partsToPay: payload.partsToPay,
+					amount: payload.amount,
+					currency: payload.currency,
+					status: payload.status,
+					clientId: checkout.clientId,
+				});
+			} else {
+				checkout.confirmPayment({
+					amount: payload.amount,
+					currency: payload.currency,
+					status: payload.status,
+				});
+			}
+			setPaidAmount(payload.amount);
+		};
+		run();
 		payloadRef.current = null;
-	}, [token, checkout.session, checkout.confirmPayment]);
+	}, [token, checkout.session, checkout.clientId, checkout.confirmPayment, payEqualPartSlotsByCountMutation, payAmountSlotMutation]);
 
 	return (
 		<MobileContainer className="min-h-screen bg-zinc-50 dark:bg-zinc-950">

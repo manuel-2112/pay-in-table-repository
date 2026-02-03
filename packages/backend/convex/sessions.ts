@@ -59,6 +59,101 @@ export const getSessionByToken = query({
 });
 
 /**
+ * Choose split mode for the session (client). First caller sets the mode; others get current mode.
+ * Returns the current splitMode (so client can enable/disable buttons).
+ */
+export const chooseSplitMode = mutation({
+	args: {
+		accessToken: v.string(),
+		clientId: v.string(),
+		mode: v.union(
+			v.literal("items"),
+			v.literal("equal_parts"),
+			v.literal("by_amount")
+		),
+	},
+	handler: async (ctx, args) => {
+		const table = await ctx.db
+			.query("tables")
+			.withIndex("by_access_token", (q) => q.eq("accessToken", args.accessToken))
+			.first();
+
+		if (!table) {
+			throw new Error("invalid token");
+		}
+
+		const activeSession = await ctx.db
+			.query("sessions")
+			.withIndex("by_table_id_status", (q) =>
+				q.eq("tableId", table._id).eq("status", "active")
+			)
+			.first();
+
+		if (!activeSession) {
+			throw new Error("no active session");
+		}
+
+		const currentMode = activeSession.splitMode;
+		if (currentMode != null) {
+			return currentMode;
+		}
+
+		const now = Date.now();
+		await ctx.db.patch(activeSession._id, {
+			splitMode: args.mode,
+			splitModeChosenAt: now,
+			splitModeChosenByClientId: args.clientId,
+		});
+		return args.mode;
+	},
+});
+
+/**
+ * Clear split mode (only the client who chose it can clear). Sets splitMode back to null.
+ */
+export const clearSplitMode = mutation({
+	args: {
+		accessToken: v.string(),
+		clientId: v.string(),
+	},
+	handler: async (ctx, args) => {
+		const table = await ctx.db
+			.query("tables")
+			.withIndex("by_access_token", (q) => q.eq("accessToken", args.accessToken))
+			.first();
+
+		if (!table) {
+			throw new Error("invalid token");
+		}
+
+		const activeSession = await ctx.db
+			.query("sessions")
+			.withIndex("by_table_id_status", (q) =>
+				q.eq("tableId", table._id).eq("status", "active")
+			)
+			.first();
+
+		if (!activeSession) {
+			throw new Error("no active session");
+		}
+
+		const chosenBy = activeSession.splitModeChosenByClientId;
+		if (activeSession.splitMode == null) {
+			return; // already clear, idempotent
+		}
+		if (chosenBy !== args.clientId) {
+			throw new Error("solo quien eligió el método puede deshacerlo");
+		}
+
+		await ctx.db.patch(activeSession._id, {
+			splitMode: undefined,
+			splitModeChosenAt: undefined,
+			splitModeChosenByClientId: undefined,
+		});
+	},
+});
+
+/**
  * Open a new session on a table (staff).
  * Fails if the table already has an active session.
  */

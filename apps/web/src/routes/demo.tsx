@@ -8,7 +8,7 @@
  */
 
 import { createFileRoute, Outlet, useRouterState } from "@tanstack/react-router";
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { useConvexAction } from "@convex-dev/react-query";
 import { api } from "@pay-in-table-repository/backend/convex/_generated/api";
 import { MobileContainer, PageHeader } from "@/components/design-system/layout";
@@ -18,14 +18,15 @@ import { FloatingPaymentPanel } from "@/components/payment/checkout";
 import { FintocCheckout } from "@/components/payment/fintoc";
 import { ItemSelectorContainer, type SplitItem } from "@/components/payment/item-selector";
 import { QuantityPill } from "@/components/payment/quantity-pill";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Progress } from "@/components/ui/progress";
 import { CustomButton } from "@/components/design-system/ui/custom-button";
+import { ChevronRight } from "lucide-react";
 import { calculateTax } from "@/lib/utils/validation";
 import { DEMO_LOGO_DATA_URL } from "@/lib/constants/demo-assets";
 import { IVA_INCLUDED, DEFAULT_TIP_PERCENTAGE } from "@/lib/constants/payment";
 
-type DemoView = "hero" | "split" | "tip" | "success";
+type DemoView = "hero" | "splitMethodChoice" | "split" | "tip" | "success";
+type DemoSplitMode = "items" | "equal_parts" | "by_amount";
 
 // Datos demo en CLP (sin backend)
 const DEMO_BILL = {
@@ -90,7 +91,7 @@ function DemoPage() {
 	// Por partes iguales
 	const [totalParts, setTotalParts] = useState(5);
 	const [partsToPay, setPartsToPay] = useState(3);
-	const [splitTab, setSplitTab] = useState<"items" | "equal" | "amount">("items");
+	const [demoSplitMode, setDemoSplitMode] = useState<DemoSplitMode | null>(null);
 
 	const createFintocSession = useConvexAction(api.fintoc.createFintocCheckoutSession);
 
@@ -189,10 +190,12 @@ function DemoPage() {
 	}, [createFintocSession, totalToPay]);
 
 	const handleBackFromTip = useCallback(() => {
-		setView(splitSubtotal != null ? "split" : "hero");
-	}, [splitSubtotal]);
+		setView(splitSubtotal != null || demoSplitMode != null ? "split" : "splitMethodChoice");
+	}, [splitSubtotal, demoSplitMode]);
 
-	const handleBackFromSplit = useCallback(() => setView("hero"), []);
+	const handleBackFromSplitMethodChoice = useCallback(() => setView("hero"), []);
+
+	const handleBackFromSplit = useCallback(() => setView("splitMethodChoice"), []);
 
 	const handleRestart = useCallback(() => {
 		setView("hero");
@@ -204,7 +207,14 @@ function DemoPage() {
 		setFintocSessionToken(null);
 		setSplitSubtotal(null);
 		setSplitTax(null);
+		setDemoSplitMode(null);
 	}, []);
+
+	useEffect(() => {
+		if (view === "split" && demoSplitMode == null) {
+			setView("splitMethodChoice");
+		}
+	}, [view, demoSplitMode]);
 
 	const handleFintocSuccess = useCallback(() => {
 		setFintocSessionToken(null);
@@ -244,8 +254,114 @@ function DemoPage() {
 		);
 	}
 
-	// Vista: Dividir (seleccionar items a pagar)
+	// Vista: Elegir método de división (3 botones; los no elegidos deshabilitados)
+	if (view === "splitMethodChoice") {
+		const modeItemsEnabled = demoSplitMode == null || demoSplitMode === "items";
+		const modeEqualEnabled = demoSplitMode == null || demoSplitMode === "equal_parts";
+		const modeAmountEnabled = demoSplitMode == null || demoSplitMode === "by_amount";
+		return (
+			<div className="min-h-screen bg-zinc-50 dark:bg-zinc-950">
+				<PageHeader
+					title="Dividir cuenta"
+					subtitle="Mesa 1"
+					onBack={handleBackFromSplitMethodChoice}
+				/>
+				<main className="mx-auto max-w-lg px-4 py-6">
+					<div className="mb-4 text-center">
+						<div className="mb-2 flex items-center justify-center gap-2">
+							<div className="size-6 rounded-full bg-gradient-to-br from-[var(--brand-primary)] to-[var(--brand-secondary)]" />
+							<span className="text-sm font-medium text-zinc-900 dark:text-white">
+								{DEMO_BILL.restaurantName}
+							</span>
+						</div>
+						<p className="text-xs text-zinc-500 dark:text-zinc-400">
+							{DEMO_BILL.date} · {DEMO_BILL.serverName}
+						</p>
+					</div>
+					<p className="mb-6 text-center text-sm text-zinc-600 dark:text-zinc-400">
+						¿Cómo quieres dividir la cuenta?
+					</p>
+					<div className="mx-auto flex max-w-sm flex-col gap-3">
+						<div>
+							<CustomButton
+								variant="minimal"
+								className="w-full"
+								disabled={!modeItemsEnabled}
+								onClick={() => {
+									setDemoSplitMode("items");
+									setView("split");
+								}}
+							>
+								<span className="text-left">Por ítems</span>
+								<ChevronRight className="h-4 w-4 shrink-0 text-zinc-400" />
+							</CustomButton>
+							{!modeItemsEnabled && (
+								<p className="mt-1 text-center text-xs text-zinc-500 dark:text-zinc-400">
+									Elegido por otro comensal
+								</p>
+							)}
+						</div>
+						<div>
+							<CustomButton
+								variant="minimal"
+								className="w-full"
+								disabled={!modeEqualEnabled}
+								onClick={() => {
+									setDemoSplitMode("equal_parts");
+									setView("split");
+								}}
+							>
+								<span className="text-left">Por partes iguales</span>
+								<ChevronRight className="h-4 w-4 shrink-0 text-zinc-400" />
+							</CustomButton>
+							{!modeEqualEnabled && (
+								<p className="mt-1 text-center text-xs text-zinc-500 dark:text-zinc-400">
+									Elegido por otro comensal
+								</p>
+							)}
+						</div>
+						<div>
+							<CustomButton
+								variant="minimal"
+								className="w-full"
+								disabled={!modeAmountEnabled}
+								onClick={() => {
+									setDemoSplitMode("by_amount");
+									setView("split");
+								}}
+							>
+								<span className="text-left">Por monto</span>
+								<ChevronRight className="h-4 w-4 shrink-0 text-zinc-400" />
+							</CustomButton>
+							{!modeAmountEnabled && (
+								<p className="mt-1 text-center text-xs text-zinc-500 dark:text-zinc-400">
+									Elegido por otro comensal
+								</p>
+							)}
+						</div>
+					</div>
+					{demoSplitMode != null && (
+						<div className="mt-6 text-center">
+							<button
+								type="button"
+								onClick={() => setDemoSplitMode(null)}
+								className="text-sm font-normal text-[var(--brand-secondary)] underline-offset-2 hover:opacity-80 hover:underline"
+							>
+								Liberar método de división
+							</button>
+							<p className="mt-1 text-xs text-zinc-400 dark:text-zinc-500">
+								Vuelve a dejar que cualquiera elija el método
+							</p>
+						</div>
+					)}
+				</main>
+			</div>
+		);
+	}
+
+	// Vista: Dividir (contenido según demoSplitMode)
 	if (view === "split") {
+		if (demoSplitMode == null) return null;
 		return (
 			<div className="min-h-screen bg-zinc-50 pb-32 dark:bg-zinc-950">
 				<PageHeader
@@ -265,13 +381,8 @@ function DemoPage() {
 							{DEMO_BILL.date} · {DEMO_BILL.serverName}
 						</p>
 					</div>
-					<Tabs value={splitTab} onValueChange={(v) => setSplitTab(v as "items" | "equal" | "amount")} className="w-full">
-						<TabsList className="grid w-full grid-cols-3">
-							<TabsTrigger value="items">Por ítems</TabsTrigger>
-							<TabsTrigger value="equal">Por partes</TabsTrigger>
-							<TabsTrigger value="amount">Por monto</TabsTrigger>
-						</TabsList>
-						<TabsContent value="items" className="mt-3">
+					{demoSplitMode === "items" && (
+						<>
 							<p className="mb-4 text-center text-sm text-zinc-500 dark:text-zinc-400">
 								Selecciona los items que quieres pagar
 							</p>
@@ -283,8 +394,10 @@ function DemoPage() {
 									label="Continuar"
 								/>
 							</div>
-						</TabsContent>
-						<TabsContent value="equal" className="mt-3">
+						</>
+					)}
+					{demoSplitMode === "equal_parts" && (
+						<>
 							<p className="mb-4 text-left text-xs text-zinc-500 dark:text-zinc-400">
 								Divide el total en partes iguales y elige cuántas pagas
 							</p>
@@ -320,8 +433,24 @@ function DemoPage() {
 									/>
 								</div>
 							</div>
-						</TabsContent>
-						<TabsContent value="amount" className="mt-3">
+							{partsToPay > 0 && (
+								<div className="fixed bottom-0 left-0 right-0 z-10 p-4 bg-white/95 dark:bg-zinc-900/95 border-t border-zinc-200 dark:border-zinc-800">
+									<FloatingPaymentPanel
+										selectedCount={0}
+										subtotal={Math.round(totalBillDemo * (partsToPay / totalParts))}
+										tax={IVA_INCLUDED ? 0 : Math.round(totalBillDemo * (partsToPay / totalParts) * taxRateDemo)}
+										total={Math.round(totalBillDemo * (partsToPay / totalParts))}
+										onPayNow={handleEqualPartsContinue}
+										label="Continuar"
+										alwaysVisible
+										subtitle={`${partsToPay} de ${totalParts} partes`}
+									/>
+								</div>
+							)}
+						</>
+					)}
+					{demoSplitMode === "by_amount" && (
+						<>
 							<p className="mb-3 text-center text-xs text-zinc-500 dark:text-zinc-400">
 								Indica el monto que quieres pagar
 							</p>
@@ -330,21 +459,7 @@ function DemoPage() {
 									Próximamente: división por monto
 								</p>
 							</div>
-						</TabsContent>
-					</Tabs>
-					{splitTab === "equal" && partsToPay > 0 && (
-						<div className="fixed bottom-0 left-0 right-0 z-10 p-4 bg-white/95 dark:bg-zinc-900/95 border-t border-zinc-200 dark:border-zinc-800">
-							<FloatingPaymentPanel
-								selectedCount={0}
-								subtotal={Math.round(totalBillDemo * (partsToPay / totalParts))}
-								tax={IVA_INCLUDED ? 0 : Math.round(totalBillDemo * (partsToPay / totalParts) * taxRateDemo)}
-								total={Math.round(totalBillDemo * (partsToPay / totalParts))}
-								onPayNow={handleEqualPartsContinue}
-								label="Continuar"
-								alwaysVisible
-								subtitle={`${partsToPay} de ${totalParts} partes`}
-							/>
-						</div>
+						</>
 					)}
 				</main>
 			</div>
@@ -373,7 +488,7 @@ function DemoPage() {
 					tax={taxDemo}
 					total={totalBillDemo}
 					onPay={handleGoToTip}
-					onSplit={() => setView("split")}
+					onSplit={() => setView("splitMethodChoice")}
 					showActions
 					logoUrl={DEMO_LOGO_DATA_URL}
 				/>

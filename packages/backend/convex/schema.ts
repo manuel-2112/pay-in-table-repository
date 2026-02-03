@@ -50,6 +50,15 @@ export default defineSchema({
 		totalAmountCents: v.number(),
 		createdAt: v.number(),
 		closedAt: v.optional(v.number()),
+		splitMode: v.optional(
+			v.union(
+				v.literal("items"),
+				v.literal("equal_parts"),
+				v.literal("by_amount")
+			)
+		),
+		splitModeChosenAt: v.optional(v.number()),
+		splitModeChosenByClientId: v.optional(v.string()),
 	})
 		.index("by_table_id", ["tableId"])
 		.index("by_table_id_status", ["tableId", "status"]),
@@ -77,4 +86,36 @@ export default defineSchema({
 		fintocPaymentId: v.optional(v.string()),
 		createdAt: v.number(),
 	}).index("by_session_id", ["sessionId"]),
+
+	sessionEqualParts: defineTable({
+		sessionId: v.id("sessions"),
+		totalParts: v.number(),
+		totalAmountCents: v.number(),
+		createdAt: v.number(),
+	}).index("by_session_id", ["sessionId"]),
+
+	sessionEqualPartSlots: defineTable({
+		sessionEqualPartId: v.id("sessionEqualParts"),
+		partIndex: v.number(),
+		amountCents: v.number(),
+		status: v.union(v.literal("pending"), v.literal("paid")),
+		paidAt: v.optional(v.number()),
+		fintocPaymentId: v.optional(v.string()),
+		clientId: v.optional(v.string()),
+	}).index("by_session_equal_part_id", ["sessionEqualPartId"]),
+
+	sessionSplitByAmount: defineTable({
+		sessionId: v.id("sessions"),
+		totalAmountCents: v.number(),
+		createdAt: v.number(),
+	}).index("by_session_id", ["sessionId"]),
+
+	sessionSplitByAmountSlots: defineTable({
+		sessionSplitByAmountId: v.id("sessionSplitByAmount"),
+		amountCents: v.number(),
+		status: v.union(v.literal("pending"), v.literal("paid")),
+		paidAt: v.optional(v.number()),
+		fintocPaymentId: v.optional(v.string()),
+		clientId: v.optional(v.string()),
+	}).index("by_session_split_by_amount_id", ["sessionSplitByAmountId"]),
 });
