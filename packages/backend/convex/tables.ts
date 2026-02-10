@@ -95,3 +95,67 @@ export const listTablesWithSessions = query({
 		return result;
 	},
 });
+
+const ONE_DAY_MS = 24 * 60 * 60 * 1000;
+
+/**
+ * Dashboard metrics for a location: payments today, tables closed today, active tables, items paid today.
+ */
+export const getDashboardMetrics = query({
+	args: {
+		locationId: v.id("locations"),
+	},
+	handler: async (ctx, args) => {
+		const now = Date.now();
+		const since = now - ONE_DAY_MS;
+
+		const tables = await ctx.db
+			.query("tables")
+			.withIndex("by_location_id", (q) => q.eq("locationId", args.locationId))
+			.collect();
+
+		const tableIds = new Set(tables.map((t) => t._id));
+		let paymentsProcessedTodayCents = 0;
+		let tablesClosedToday = 0;
+		const activeTableIds = new Set<string>();
+		let itemsPaidToday = 0;
+
+		for (const table of tables) {
+			const sessions = await ctx.db
+				.query("sessions")
+				.withIndex("by_table_id", (q) => q.eq("tableId", table._id))
+				.collect();
+
+			for (const session of sessions) {
+				if (session.status === "active") {
+					activeTableIds.add(table._id);
+				}
+				if (session.status === "closed" && session.closedAt != null && session.closedAt >= since) {
+					tablesClosedToday += 1;
+					const items = await ctx.db
+						.query("sessionItems")
+						.withIndex("by_session_id", (q) => q.eq("sessionId", session._id))
+						.collect();
+					itemsPaidToday += items.filter((i) => i.status === "paid").length;
+				}
+
+				const payments = await ctx.db
+					.query("sessionPayments")
+					.withIndex("by_session_id", (q) => q.eq("sessionId", session._id))
+					.collect();
+				for (const p of payments) {
+					if (p.createdAt >= since) {
+						paymentsProcessedTodayCents += p.amount;
+					}
+				}
+			}
+		}
+
+		return {
+			paymentsProcessedTodayCents,
+			tablesClosedToday,
+			activeTablesCount: activeTableIds.size,
+			itemsPaidToday,
+		};
+	},
+});

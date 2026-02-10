@@ -3,7 +3,7 @@
  */
 
 import { v } from "convex/values";
-import { mutation } from "./_generated/server";
+import { mutation, query } from "./_generated/server";
 
 /**
  * Create a restaurant.
@@ -38,5 +38,30 @@ export const createLocation = mutation({
 			address: args.address,
 			createdAt: now,
 		});
+	},
+});
+
+/**
+ * List locations for a restaurant (for dashboard location selector).
+ */
+export const listLocationsForRestaurant = query({
+	args: {
+		restaurantId: v.id("restaurants"),
+	},
+	handler: async (ctx, args) => {
+		return await ctx.db
+			.query("locations")
+			.withIndex("by_restaurant_id", (q) => q.eq("restaurantId", args.restaurantId))
+			.collect();
+	},
+});
+
+/**
+ * List all restaurants (for dashboard; first restaurant's first location can be used as default).
+ */
+export const listRestaurants = query({
+	args: {},
+	handler: async (ctx) => {
+		return await ctx.db.query("restaurants").collect();
 	},
 });
