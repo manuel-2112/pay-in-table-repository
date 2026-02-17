@@ -33,7 +33,7 @@ export function DashboardMetricsCards() {
 		(locationId != null && metrics === undefined);
 
 	return (
-		<div className="grid grid-cols-1 gap-4 *:data-[slot=card]:shadow-xs sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-4">
+		<div className="grid @5xl/main:grid-cols-4 @xl/main:grid-cols-2 grid-cols-1 gap-4 *:data-[slot=card]:bg-linear-to-t *:data-[slot=card]:from-primary/5 *:data-[slot=card]:to-card *:data-[slot=card]:shadow-xs dark:*:data-[slot=card]:bg-card">
 			<PaymentsTodayCard
 				amountCents={metrics?.paymentsProcessedTodayCents}
 				isLoading={isLoading}

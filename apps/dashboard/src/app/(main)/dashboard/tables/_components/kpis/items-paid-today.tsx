@@ -1,9 +1,16 @@
 "use client";
 
-import { PackageCheck } from "lucide-react";
-
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import {
+	Card,
+	CardAction,
+	CardDescription,
+	CardFooter,
+	CardHeader,
+	CardTitle,
+} from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
+import { PackageCheck } from "lucide-react";
 
 interface ItemsPaidTodayCardProps {
 	count: number | undefined;
@@ -12,25 +19,29 @@ interface ItemsPaidTodayCardProps {
 
 export function ItemsPaidTodayCard({ count, isLoading }: ItemsPaidTodayCardProps) {
 	return (
-		<Card>
+		<Card className="@container/card">
 			<CardHeader>
-				<CardTitle>
-					<div className="flex items-center gap-2">
-						<span className="grid size-7 place-content-center rounded-sm bg-blue-500/10">
-							<PackageCheck className="size-5 text-blue-600 dark:text-blue-400" />
-						</span>
-						Ítems pagados hoy
-					</div>
-				</CardTitle>
-			</CardHeader>
-			<CardContent className="space-y-1">
+				<CardDescription>Ítems pagados hoy</CardDescription>
 				{isLoading ? (
 					<Skeleton className="h-8 w-16" />
 				) : (
-					<p className="font-medium text-xl tabular-nums">{count ?? 0}</p>
+					<CardTitle className="font-semibold @[250px]/card:text-3xl text-2xl tabular-nums">
+						{count ?? 0}
+					</CardTitle>
 				)}
-				<p className="text-muted-foreground text-xs">En sesiones cerradas en las últimas 24 h</p>
-			</CardContent>
+				<CardAction>
+					<Badge variant="outline">
+						<PackageCheck className="size-3.5" />
+						Hoy
+					</Badge>
+				</CardAction>
+			</CardHeader>
+			<CardFooter className="flex-col items-start gap-1.5 text-sm">
+				<div className="line-clamp-1 flex gap-2 font-medium">
+					En sesiones cerradas en las últimas 24 h
+				</div>
+				<div className="text-muted-foreground">Productos marcados como pagados</div>
+			</CardFooter>
 		</Card>
 	);
 }

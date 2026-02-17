@@ -1,9 +1,14 @@
 "use client";
 
+import * as React from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 
-import { ChevronRight, MailIcon, PlusCircleIcon } from "lucide-react";
+import { useMutation, useQuery } from "convex/react";
+import { api } from "@pay-in-table-repository/backend/convex/_generated/api";
+import type { Id } from "@pay-in-table-repository/backend/convex/_generated/dataModel";
+import { ChevronRight, Loader2, PlusCircleIcon } from "lucide-react";
+import { toast } from "sonner";
 
 import { Button } from "@/components/ui/button";
 import { Collapsible, CollapsibleContent, CollapsibleTrigger } from "@/components/ui/collapsible";
@@ -145,6 +150,33 @@ export function NavMain({ items }: NavMainProps) {
   const path = usePathname();
   const { state, isMobile } = useSidebar();
 
+  const restaurants = useQuery(api.restaurants.listRestaurants);
+  const restaurantId = restaurants?.[0]?._id;
+  const locations = useQuery(
+    api.restaurants.listLocationsForRestaurant,
+    restaurantId == null ? "skip" : { restaurantId },
+  );
+  const locationId = locations?.[0]?._id as Id<"locations"> | undefined;
+
+  const createTableMutation = useMutation(api.tables.createTable);
+  const [isCreatingTable, setIsCreatingTable] = React.useState(false);
+
+  const handleCreateTable = async () => {
+    if (locationId == null) {
+      toast.error("No hay ubicación. Crea un restaurante y una ubicación primero.");
+      return;
+    }
+    setIsCreatingTable(true);
+    try {
+      await createTableMutation({ locationId, label: undefined });
+      toast.success("Mesa creada. Aparecerá en la lista de mesas.");
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "No se pudo crear la mesa.");
+    } finally {
+      setIsCreatingTable(false);
+    }
+  };
+
   const isItemActive = (url: string, subItems?: NavMainItem["subItems"]) => {
     if (subItems?.length) {
       return subItems.some((sub) => path.startsWith(sub.url));
@@ -163,20 +195,18 @@ export function NavMain({ items }: NavMainProps) {
           <SidebarMenu>
             <SidebarMenuItem className="flex items-center gap-2">
               <SidebarMenuButton
-                tooltip="Quick Create"
+                tooltip="Crear mesa"
                 className="min-w-8 bg-primary text-primary-foreground duration-200 ease-linear hover:bg-primary/90 hover:text-primary-foreground active:bg-primary/90 active:text-primary-foreground"
+                onClick={handleCreateTable}
+                disabled={isCreatingTable || locationId == null}
               >
-                <PlusCircleIcon />
-                <span>Quick Create</span>
+                {isCreatingTable ? (
+                  <Loader2 className="size-4 animate-spin" />
+                ) : (
+                  <PlusCircleIcon />
+                )}
+                <span>{isCreatingTable ? "Creando…" : "Crear mesa"}</span>
               </SidebarMenuButton>
-              <Button
-                size="icon"
-                className="h-9 w-9 shrink-0 group-data-[collapsible=icon]:opacity-0"
-                variant="outline"
-              >
-                <MailIcon />
-                <span className="sr-only">Inbox</span>
-              </Button>
             </SidebarMenuItem>
           </SidebarMenu>
         </SidebarGroupContent>

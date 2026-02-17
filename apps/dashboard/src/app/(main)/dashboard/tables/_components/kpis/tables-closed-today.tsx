@@ -1,9 +1,16 @@
 "use client";
 
-import { CheckCircle2 } from "lucide-react";
-
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import {
+	Card,
+	CardAction,
+	CardDescription,
+	CardFooter,
+	CardHeader,
+	CardTitle,
+} from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
+import { CheckCircle2 } from "lucide-react";
 
 interface TablesClosedTodayCardProps {
 	count: number | undefined;
@@ -12,25 +19,29 @@ interface TablesClosedTodayCardProps {
 
 export function TablesClosedTodayCard({ count, isLoading }: TablesClosedTodayCardProps) {
 	return (
-		<Card>
+		<Card className="@container/card">
 			<CardHeader>
-				<CardTitle>
-					<div className="flex items-center gap-2">
-						<span className="grid size-7 place-content-center rounded-sm bg-green-500/10">
-							<CheckCircle2 className="size-5 text-green-600 dark:text-green-400" />
-						</span>
-						Mesas cerradas hoy
-					</div>
-				</CardTitle>
-			</CardHeader>
-			<CardContent className="space-y-1">
+				<CardDescription>Mesas cerradas hoy</CardDescription>
 				{isLoading ? (
 					<Skeleton className="h-8 w-16" />
 				) : (
-					<p className="font-medium text-xl tabular-nums">{count ?? 0}</p>
+					<CardTitle className="font-semibold @[250px]/card:text-3xl text-2xl tabular-nums">
+						{count ?? 0}
+					</CardTitle>
 				)}
-				<p className="text-muted-foreground text-xs">Sesiones cerradas en las últimas 24 h</p>
-			</CardContent>
+				<CardAction>
+					<Badge variant="outline">
+						<CheckCircle2 className="size-3.5" />
+						Hoy
+					</Badge>
+				</CardAction>
+			</CardHeader>
+			<CardFooter className="flex-col items-start gap-1.5 text-sm">
+				<div className="line-clamp-1 flex gap-2 font-medium">
+					Sesiones cerradas en las últimas 24 h
+				</div>
+				<div className="text-muted-foreground">Cuentas cerradas y pagadas</div>
+			</CardFooter>
 		</Card>
 	);
 }

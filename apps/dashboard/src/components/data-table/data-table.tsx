@@ -26,6 +26,8 @@ interface DataTableProps<TData, TValue> {
   columns: ColumnDef<TData, TValue>[];
   dndEnabled?: boolean;
   onReorder?: (newData: TData[]) => void;
+  /** Si false, no se aplica ancho fijo a la primera celda (útil cuando no hay columna de checkbox). Default true. */
+  compactFirstColumn?: boolean;
 }
 
 function renderTableBody<TData, TValue>({
@@ -71,6 +73,7 @@ export function DataTable<TData, TValue>({
   columns,
   dndEnabled = false,
   onReorder,
+  compactFirstColumn = true,
 }: DataTableProps<TData, TValue>) {
   const dataIds: UniqueIdentifier[] = table.getRowModel().rows.map((row) => Number(row.id) as UniqueIdentifier);
   const sortableId = React.useId();
@@ -103,7 +106,9 @@ export function DataTable<TData, TValue>({
           </TableRow>
         ))}
       </TableHeader>
-      <TableBody className="**:data-[slot=table-cell]:first:w-8">
+      <TableBody
+        className={compactFirstColumn ? "**:data-[slot=table-cell]:first:w-8" : undefined}
+      >
         {renderTableBody({ table, columns, dndEnabled, dataIds })}
       </TableBody>
     </Table>
